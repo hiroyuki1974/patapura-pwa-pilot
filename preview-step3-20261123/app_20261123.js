@@ -35,7 +35,7 @@ async function recordDelete(store,id){const db=await openDB();try{return await n
  const tx=db.transaction(store,'readwrite');tx.objectStore(store).delete(id);
  tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
 });}finally{db.close();}}
-async function saveProgress(){await recordPut('progress',progress);renderProgress();}
+async function saveProgress(){await recordPut('progress',progress);renderProgress();document.dispatchEvent(new Event('patapura:progress'));}
 function renderProgress(){
  $('todayDate').textContent='日本時間：'+localDate();
  const completed=progress.lessons?.[selectedLessonId]||null;
@@ -75,7 +75,7 @@ function refreshAudio(){
    objectURL=URL.createObjectURL(audioRecord.blob);audio.src=objectURL;log('音声ソース：IndexedDB Blob URL');
  }
  audio.load();$('playbackState').textContent='再生準備中';
- if('mediaSession'in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:selectedLessonId+' / '+readableFilename(audioRecord.filename),artist:'パタプラ個人学習',album:'Step 3 v0.6'});}catch(err){log('MediaSessionメタデータ不可：'+err.message);}}
+ if('mediaSession'in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:selectedLessonId+' / '+readableFilename(audioRecord.filename),artist:'パタプラ個人学習',album:'Step 4 v0.7'});}catch(err){log('MediaSessionメタデータ不可：'+err.message);}}
 }
 async function showDiagnostics(){
  const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
@@ -108,7 +108,7 @@ async function setupServiceWorker(){
 }
 function downloadBlob(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),12000);}
 async function startup(){
- log('アプリ起動：'+location.href);log('バージョン：2026-11-23 v0.6');
+ log('アプリ起動：'+location.href);log('バージョン：2026-11-23 v0.7');
  if(!('indexedDB'in window)){notice('IndexedDBに対応しない環境です');log('IDBなし：続行不可');return;}
  try{progress=(await recordGet('progress',PROGRESS_ID))||progress;audioRecord=await recordGet('audio',MEDIA_ID);renderStorage();renderProgress();refreshAudio();log('IDB復元：'+(audioRecord?'音声あり':'音声なし')+'／'+(progress.completedOn||'進捗なし'));}
  catch(err){notice('保存領域の読込に失敗しました');log('IDB読込エラー：'+err.message);}
@@ -149,6 +149,7 @@ $('backupFile').addEventListener('change',async e=>{
  progress={id:PROGRESS_ID,completedOn:typeof obj.progress.completedOn==='string'?obj.progress.completedOn:null,checks:Object.fromEntries(CASES.map(k=>[k,!!obj.progress.checks[k]]))};
  progress.lessons=Object.fromEntries(Object.entries(obj.progress.lessons||{}).filter(([k,v])=>/^(standard|meeting|facilitation|colloquial):[1-9]\d?$/.test(k)&&(v===null||typeof v==='string')));
  progress.selection=obj.progress.selection;
+ progress.dailyPlan=obj.progress.dailyPlan;
  await saveProgress();document.dispatchEvent(new Event('progressrestored'));notice('バックアップから復元しました');log('進捗JSON復元');}
  catch(err){notice('復元失敗：'+err.message);log('復元失敗：'+err.message);}e.target.value='';
 });
