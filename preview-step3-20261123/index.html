@@ -12,17 +12,17 @@
 <link rel="apple-touch-icon" href="./icon.svg">
 <link rel="icon" href="./icon.svg">
 <link rel="stylesheet" href="./style_20261123.css">
-<title>今日のパタプラ｜v0.8</title>
+<title>今日のパタプラ｜v0.9</title>
 </head>
 <body>
 <main class="wrap">
 <header class="header">
- <div class="header-kicker">PATAPURA · TECHNICAL PILOT</div>
+ <div class="header-kicker">PATAPURA · DAILY STUDY</div>
  <h1>今日のパタプラ</h1>
  <p>毎日3つのプログラムを1レッスンずつ。会議とファシリテーションは交互に進みます。</p>
- <div class="status-row"><span class="tag">v0.8 · 2026.11.23</span><span id="modeLabel" class="tag tag-muted">起動環境を確認中</span></div>
+ <div class="status-row"><span class="tag">v0.9 · 2026.11.23</span><span id="modeLabel" class="tag tag-muted">起動環境を確認中</span></div>
 </header>
-<section class="notice" aria-label="注意"><strong>この試験版に購入教材は含まれません。</strong> 選んだMP3はこの端末内のブラウザ保存領域に取り込まれ、当アプリからサーバーへアップロードされません。元のMP3は必ず別に保管してください。</section>
+<section class="notice" aria-label="データ保管"><strong>教材はこのiPhone内に保存されます。</strong> 本文・音声・学習記録は既存の保存領域を引き継ぎます。ホーム画面アイコンや元のMP3は削除しないでください。</section>
 <section class="panel daily-panel" id="dailyPanel" aria-labelledby="dailyHeading">
  <div class="step-head"><span class="num">✓</span><h2 id="dailyHeading">今日の学習</h2></div>
  <div class="daily-summary"><span id="dailyDate">読み込み中</span><strong id="dailyCount">0 / 3 完了</strong></div>
@@ -54,10 +54,12 @@
  <div id="audioImportErrors" class="import-errors study-error"></div><div id="fileStatus" class="small-muted"></div><div id="storageStatus" class="small-muted"></div>
 </div></details>
 <section class="panel" aria-labelledby="secOfflineLibrary">
- <div class="step-head"><span class="num">1</span><h2 id="secOfflineLibrary">全217レッスンの本文</h2></div>
- <p class="hint">Step 2の表示用統合JSONを1回選択します。本文は端末内に保存され、次回からオフラインで閲覧できます。</p>
+ <div class="step-head"><span class="num">1</span><h2 id="secOfflineLibrary">レッスン・音声プレーヤー</h2></div>
+ <details class="study-setup-details"><summary>本文データの追加・再登録（必要なときだけ）</summary>
+ <p class="hint">本文217件が保存済みなら再登録は不要です。新しい端末で利用する場合のみ統合JSONを選びます。</p>
  <label class="file-input" for="offlineJsonFiles">統合JSON（全217件）を取り込む</label>
  <input id="offlineJsonFiles" class="visually-hidden" type="file" accept=".json,application/json">
+ </details>
  <div class="study-reader-head"><strong>保存状況</strong><strong id="offlineTotalCount">0 / 217 レッスン</strong></div>
  <div id="offlineLibrarySummary" class="library-summary"></div>
  <div id="offlineImportStatus" class="small-muted" role="status"></div>
@@ -83,12 +85,12 @@
 </section>
 <section class="panel" aria-labelledby="sec3">
  <div class="step-head"><span class="num">3</span><h2 id="sec3">学習記録の保存</h2></div>
- <p class="hint">選択中のレッスンの完了を記録します。記録はこの試験版専用で、既存v0.5とは保存領域を分けています。</p>
- <div class="progress-card"><div><strong>選択中のレッスン</strong><span id="todayDate" class="small-muted"></span></div><button id="completeBtn" class="solid" type="button">学習完了にする</button></div>
+ <p class="hint">学習記録は端末内に保存します。「完了して次の教材へ」で、今日の未完了プログラムに進めます。</p>
+ <div class="progress-card"><div><strong>選択中のレッスン</strong><span id="todayDate" class="small-muted"></span></div><div class="progress-actions"><button id="completeNextBtn" class="solid" type="button" disabled>完了して次の教材へ</button><button id="completeBtn" class="outline" type="button">学習完了にする（記録のみ）</button></div></div>
  <div id="completeState" class="small-muted">未完了</div>
- <div class="inline-actions"><button class="outline" id="exportBackup" type="button">進捗JSONを保存</button><label for="backupFile" class="outline label-button">JSONから復元</label><input class="visually-hidden" type="file" id="backupFile" accept=".json,application/json"></div>
+ <details class="study-setup-details"><summary>学習記録のバックアップ・復元</summary><div class="inline-actions"><button class="outline" id="exportBackup" type="button">進捗JSONを保存</button><label for="backupFile" class="outline label-button">JSONから復元</label><input class="visually-hidden" type="file" id="backupFile" accept=".json,application/json"></div></details>
 </section>
-<section class="panel" aria-labelledby="sec4">
+<details class="panel study-qa-details" id="qaDetails"><summary>実機動作チェック（必要なときだけ）</summary>
  <div class="step-head"><span class="num">4</span><h2 id="sec4">iPhone実機チェック</h2></div>
  <p class="hint">実機で確認した項目にチェックしてください。チェック状況も端末に保存されます。実機で未確認ならチェックしないでください。</p>
  <div class="check-list" id="checkList">
@@ -100,9 +102,9 @@
   <label><input type="checkbox" data-check="update"><span>サイトの更新後も音声・進捗が残った</span></label>
  </div>
  <div class="pass-count"><span>合格確認</span><strong id="checkedCount">0 / 6</strong></div>
-</section>
-<details class="details"><summary>技術情報・トラブル診断</summary><div class="tech"><p>通常は「直接再生」を使用します。SW経由はRange応答の比較試験用です。</p><div class="segmented"><button id="blobMode" class="selected" type="button" aria-pressed="true">直接再生</button><button id="swMode" type="button" aria-pressed="false">SW経由</button></div><div class="inline-actions"><button class="outline" id="rangeCheck" type="button">Range応答を確認</button><button class="outline" id="reloadAudio" type="button">音声を再読み込み</button></div><p id="swStatus" class="small-muted"></p><p id="diagnostics"></p><p class="small-muted">サービスワーカーが使えない場合は、HTTPSで開いてください。サイト初回起動後は再読み込みするとSW経由試験が可能になります。</p><div class="inline-actions"><button id="copyLog" class="outline" type="button">診断ログをコピー</button><button id="requestPersist" class="outline" type="button">保存保護を要求</button></div><pre id="log" aria-label="診断ログ"></pre></div></details>
-<footer><p>v0.8試験版 · 教材は端末内にのみ保存</p><button id="resetData" type="button" class="danger-link">試験データだけを消去</button></footer>
+</details>
+<details class="details"><summary>技術情報・トラブル診断</summary><div class="tech"><p>通常は「直接再生」を使用します。SW経由はRange応答の比較試験用です。</p><div class="segmented"><button id="blobMode" class="selected" type="button" aria-pressed="true">直接再生</button><button id="swMode" type="button" aria-pressed="false">SW経由</button></div><div class="inline-actions"><button class="outline" id="rangeCheck" type="button">Range応答を確認</button><button class="outline" id="reloadAudio" type="button">音声を再読み込み</button></div><p id="swStatus" class="small-muted"></p><p id="diagnostics"></p><p class="small-muted">サービスワーカーが使えない場合は、HTTPSで開いてください。サイト初回起動後は再読み込みするとSW経由試験が可能になります。</p><div class="inline-actions"><button id="copyLog" class="outline" type="button">診断ログをコピー</button><button id="requestPersist" class="outline" type="button">保存保護を要求</button></div><pre id="log" aria-label="診断ログ"></pre><div class="maintenance-danger"><p>データを消去すると音声・本文・学習記録を失います。通常は使用しないでください。</p><button id="resetData" type="button" class="danger-link">試験データだけを消去</button></div></div></details>
+<footer><p>v0.9 · 教材は端末内にのみ保存</p></footer>
 <div id="toast" role="status" aria-live="polite" class="toast" hidden></div>
 </main>
 <script src="./core_20261123.js" defer></script>
