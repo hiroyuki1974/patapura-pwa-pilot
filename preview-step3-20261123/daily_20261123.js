@@ -4,6 +4,15 @@
 const D=PatapuraDailyCore;
 const $=id=>document.getElementById(id);
 let startupComplete=false;
+let recordProgram='business';
+const groupOf=id=>id?.startsWith('meeting:')||id?.startsWith('facilitation:')?'meeting_facilitation':id?.startsWith('colloquial:')?'colloquial':'business';
+function shortLabel(id){if(!id)return '終了';const [track,n]=id.split(':');return track==='meeting'?'会議 '+n:track==='facilitation'?'ファシリ '+n:'Lesson '+n;}
+function showView(view){for(const k of ['Study','Records','Settings']){$(k.toLowerCase()+'View').hidden=k!==view;$('show'+k).setAttribute('aria-pressed',String(k===view));}if(view==='Records')renderRecords();}
+function syncUnified(){const select=$('unifiedLessonSelect');const actual=$('offlineLessonSelect').value;const group=actual?groupOf(actual):$('programSelect').value;const p=D.PROGRAMS.find(x=>x.key===group);select.replaceChildren();if(!p||!actual){select.disabled=true;return;}select.disabled=false;for(const [i,id] of p.sequence.entries()){const o=document.createElement('option');o.value=id;o.textContent=group==='meeting_facilitation'?String(i+1).padStart(2,'0')+'｜'+shortLabel(id):shortLabel(id);select.append(o);}select.value=actual;}
+function openRecord(id){showView('Study');const track=id.split(':')[0];document.dispatchEvent(new CustomEvent('patapura:navigate',{detail:{track,id,kind:track==='colloquial'?'type_b':'review'}}));$('secOfflineLibrary').scrollIntoView({behavior:'smooth',block:'start'});}
+function renderRecords(){const p=D.PROGRAMS.find(x=>x.key===recordProgram)||D.PROGRAMS[0];const dates=progress.lessons||{};const total=D.PROGRAMS.reduce((n,x)=>n+x.sequence.filter(id=>Boolean(dates[id])).length,0);$('recordsTotal').textContent=total+' / 217';$('recordSummary').textContent=p.sequence.filter(id=>Boolean(dates[id])).length+' / '+p.sequence.length+' レッスン完了';const tabs=$('recordTabs');tabs.replaceChildren();for(const x of D.PROGRAMS){const b=document.createElement('button');b.type='button';b.textContent=x.title;b.setAttribute('aria-pressed',String(x.key===p.key));b.addEventListener('click',()=>{recordProgram=x.key;renderRecords();});tabs.append(b);}const rows=$('recordRows');rows.replaceChildren();for(const [i,id] of p.sequence.entries()){const tr=document.createElement('tr');const number=document.createElement('td');number.textContent=String(i+1);const lesson=document.createElement('td');const b=document.createElement('button');b.type='button';b.className='record-link';b.textContent=shortLabel(id);b.addEventListener('click',()=>openRecord(id));lesson.append(b);const date=document.createElement('td');date.textContent=dates[id]||'—';if(dates[id])tr.className='record-complete';tr.append(number,lesson,date);rows.append(tr);}}
+function setupTheme(){const modes=['auto','light','dark'],labels={auto:'自動',light:'ライト',dark:'ダーク'};let mode='auto';try{const v=localStorage.getItem('patapura-theme');if(modes.includes(v))mode=v;}catch(_){}const mq=matchMedia('(prefers-color-scheme: dark)');const apply=()=>{document.documentElement.dataset.theme=mode==='auto'?(mq.matches?'dark':'light'):mode;$('themeBtn').textContent=labels[mode];$('themeBtn').setAttribute('aria-label','表示モード：'+labels[mode]+'。押すと切り替え');};$('themeBtn').addEventListener('click',()=>{mode=modes[(modes.indexOf(mode)+1)%modes.length];try{localStorage.setItem('patapura-theme',mode);}catch(_){}apply();});mq.addEventListener?.('change',apply);apply();}
+
 async function ensureDaily(){
  if(!progress.lessons)progress.lessons={};
  const selected=D.plan(progress,localDate());
@@ -20,7 +29,7 @@ function syncProgram(){
  const group=actual==='meeting'||actual==='facilitation'?'meeting_facilitation':actual==='colloquial'?'colloquial':'business';
  p.value=group;
  const detailed=$('trackDetailWrap');
- if(detailed)detailed.hidden=group!=='meeting_facilitation';
+ if(detailed)detailed.hidden=true;
  const trackSelect=$('offlineCourseSelect');
  for(const opt of trackSelect.options){
   const filtered=group==='meeting_facilitation'&&opt.value!=='meeting'&&opt.value!=='facilitation';
@@ -52,17 +61,25 @@ function render(){
   const heading=document.createElement('div');heading.className='daily-top';
   const h=document.createElement('strong');h.textContent=program.title;
   const state=document.createElement('span');state.className='daily-state';state.textContent=!id?'全課程完了':done?'完了':'未完了';
-  heading.append(h,state);
+  heading.append(h);
   const target=document.createElement('p');target.className='daily-target';target.textContent=D.lessonLabel(id);
-  article.append(heading,target,makeButton({id,done}));root.append(article);
+  article.append(heading,target,state,makeButton({id,done}));root.append(article);
  }
- $('dailyMessage').textContent=finished===3?'今日の3プログラムは完了です。次の学習日は未完了分から進みます。':'完了したレッスンだけ次の学習日に進みます。休んだ日は飛ばしません。';
+ $('dailyMessage').textContent=finished===3?'今日の学習完了':'';
  syncProgram();
 }
 document.addEventListener('DOMContentLoaded',async()=>{
+ setupTheme();
+ $('showStudy').addEventListener('click',()=>showView('Study'));
+ $('showRecords').addEventListener('click',()=>showView('Records'));
+ $('showSettings').addEventListener('click',()=>showView('Settings'));
+ $('unifiedLessonSelect').addEventListener('change',()=>{const id=$('unifiedLessonSelect').value;if(id)openRecord(id);});
+ document.addEventListener('patapura:selection',syncUnified);
+ document.addEventListener('patapura:library-ready',syncUnified);
+ document.addEventListener('patapura:progress',()=>{if(!$('recordsView').hidden)renderRecords();});
  await appReady;startupComplete=true;
  await ensureDaily();
- render();
+ render();syncUnified();
  const p=$('programSelect');
  p.addEventListener('change',()=>{
   const program=p.value;
