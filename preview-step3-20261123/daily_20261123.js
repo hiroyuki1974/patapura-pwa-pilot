@@ -21,6 +21,11 @@ function syncProgram(){
  p.value=group;
  const detailed=$('trackDetailWrap');
  if(detailed)detailed.hidden=group!=='meeting_facilitation';
+ const trackSelect=$('offlineCourseSelect');
+ for(const opt of trackSelect.options){
+  const filtered=group==='meeting_facilitation'&&opt.value!=='meeting'&&opt.value!=='facilitation';
+  opt.hidden=filtered;opt.disabled=filtered;
+ }
 }
 function makeButton(task){
  const b=document.createElement('button');b.type='button';b.className='daily-open';
