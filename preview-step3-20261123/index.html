@@ -11,25 +11,71 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./icon.svg">
 <link rel="icon" href="./icon.svg">
+<script>try{var t=localStorage.getItem("patapura-theme")||"auto";document.documentElement.dataset.theme=t==="auto"?(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t}catch(e){}</script>
 <link rel="stylesheet" href="./style_20261123.css">
-<title>今日のパタプラ｜v0.9</title>
+<title>今日のパタプラ｜v1.0</title>
 </head>
 <body>
 <main class="wrap">
 <header class="header">
- <div class="header-kicker">PATAPURA · DAILY STUDY</div>
- <h1>今日のパタプラ</h1>
- <p>毎日3つのプログラムを1レッスンずつ。会議とファシリテーションは交互に進みます。</p>
- <div class="status-row"><span class="tag">v0.9 · 2026.11.24</span><span id="modeLabel" class="tag tag-muted">起動環境を確認中</span></div>
+ <div class="compact-heading"><h1>今日のパタプラ</h1><button id="themeBtn" class="outline" type="button" aria-label="表示モードを変更">自動</button></div>
+ <div class="status-row"><span class="tag">v1.0 · 2026.11.24</span><span id="modeLabel" class="tag tag-muted">起動環境を確認中</span></div>
+ <nav class="top-nav" aria-label="画面切替"><button type="button" id="showStudy" aria-pressed="true">学習</button><button type="button" id="showRecords" aria-pressed="false">記録一覧</button><button type="button" id="showSettings" aria-pressed="false">設定</button></nav>
 </header>
-<section class="notice" aria-label="データ保管"><strong>教材はこのiPhone内に保存されます。</strong> 本文・音声・学習記録は既存の保存領域を引き継ぎます。ホーム画面アイコンや元のMP3は削除しないでください。</section>
+<div id="studyView">
 <section class="panel daily-panel" id="dailyPanel" aria-labelledby="dailyHeading">
  <div class="step-head"><span class="num">✓</span><h2 id="dailyHeading">今日の学習</h2></div>
  <div class="daily-summary"><span id="dailyDate">読み込み中</span><strong id="dailyCount">0 / 3 完了</strong></div>
  <div id="dailyCards" class="daily-cards"></div>
- <p class="hint" id="dailyMessage">ビジネス・会議／ファシリ・口語表現を1回ずつ学習します。</p>
- <div class="daily-links"><a href="#secOfflineLibrary">本文・プレーヤーへ</a><a href="#audioImportPanel">MP3登録へ</a></div>
+ <p class="hint" id="dailyMessage"></p>
 </section>
+<section class="panel" aria-labelledby="secOfflineLibrary">
+ <h2 id="secOfflineLibrary" class="compact-title">レッスン</h2>
+ <div class="lesson-select-row">
+   <label for="programSelect" class="visually-hidden">教材プログラム</label>
+   <select id="programSelect" class="field" aria-label="3つの教材プログラム"><option value="business">ビジネス</option><option value="meeting_facilitation">会議・ファシリテーション</option><option value="colloquial">口語表現</option></select>
+   <div id="trackDetailWrap" class="legacy-select" hidden><label for="offlineCourseSelect">内部教材区分</label>
+   <select id="offlineCourseSelect" class="field" aria-label="会議編またはファシリテーション編"></select></div>
+   <label for="offlineLessonSelect" class="legacy-select">内部レッスン</label>
+   <select id="offlineLessonSelect" class="legacy-select" aria-label="内部レッスン"></select>
+   <label for="unifiedLessonSelect" class="visually-hidden">レッスン</label>
+   <select id="unifiedLessonSelect" class="field" aria-label="レッスン"></select>
+ </div>
+ <div id="offlineLessonMeta" class="visually-hidden"></div>
+ <div class="lesson-player">
+  <div class="audio-kind-row"><select id="audioKindSelect" aria-label="音声の種類"></select><span id="selectedAudioStatus" class="small-muted" role="status">未登録</span></div>
+  <div class="player-card"><div class="player-top"><strong id="trackTitle">音声未登録</strong></div>
+   <audio id="audioPlayer" controls preload="metadata" playsinline aria-label="レッスン音声プレーヤー"></audio>
+   <div class="audio-info"><span id="audioTime">0:00 / 0:00</span><span id="playbackState">音声を選択してください</span></div>
+  </div>
+ </div>
+ <details class="lesson-text-details" open><summary>本文・和訳・解説</summary><div id="offlineLessonBody" class="study-reader"></div></details>
+ 
+</section>
+<section class="panel completion-panel" aria-label="学習完了">
+ <div class="progress-card"><span id="todayDate" class="visually-hidden"></span><div class="progress-actions"><button id="completeNextBtn" class="solid" type="button" disabled>完了して次の教材へ</button><button id="completeBtn" class="outline" type="button">学習完了にする（記録のみ）</button></div></div>
+ <div id="completeState" class="small-muted">未完了</div>
+ 
+</section>
+</div>
+<section id="recordsView" class="panel" hidden aria-labelledby="recordsHeading">
+ <div class="records-header"><h2 id="recordsHeading" class="compact-title">学習記録</h2><strong id="recordsTotal"></strong></div>
+ <div id="recordTabs" class="record-tabs" aria-label="記録の教材"></div>
+ <p id="recordSummary" class="small-muted"></p>
+ <table class="records-table"><thead><tr><th scope="col">順番</th><th scope="col">レッスン</th><th scope="col">完了日</th></tr></thead><tbody id="recordRows"></tbody></table>
+ <p class="small-muted">このアプリ内の学習完了記録です。公式サイトの過去の記録は含みません。</p>
+</section>
+<div id="settingsView" hidden>
+<section class="notice" aria-label="データ保管"><strong>教材はこのiPhone内に保存されます。</strong> 本文・音声・学習記録は既存の保存領域を引き継ぎます。ホーム画面アイコンや元のMP3は削除しないでください。</section>
+<section class="panel" aria-label="教材の保存状況"><details class="study-setup-details"><summary>本文データの追加・再登録（必要なときだけ）</summary>
+ <p class="hint">本文217件が保存済みなら再登録は不要です。新しい端末で利用する場合のみ統合JSONを選びます。</p>
+ <label class="file-input" for="offlineJsonFiles">統合JSON（全217件）を取り込む</label>
+ <input id="offlineJsonFiles" class="visually-hidden" type="file" accept=".json,application/json">
+ </details>
+ <div class="study-reader-head"><strong>保存状況</strong><strong id="offlineTotalCount">0 / 217 レッスン</strong></div>
+ <div id="offlineLibrarySummary" class="library-summary"></div>
+ <div id="offlineImportStatus" class="small-muted" role="status"></div>
+ <details class="study-setup-details"><summary>学習記録のバックアップ・復元</summary><div class="inline-actions"><button class="outline" id="exportBackup" type="button">進捗JSONを保存</button><label for="backupFile" class="outline label-button">JSONから復元</label><input class="visually-hidden" type="file" id="backupFile" accept=".json,application/json"></div></details></section>
 <details class="panel audio-import-details" id="audioImportPanel"><summary>MP3を追加・管理（必要なときだけ）</summary><div class="audio-import-content">
 <div class="bulk-box">
  <h3>復習音声297本をフォルダから一括登録</h3>
@@ -53,43 +99,7 @@
  <div id="audioImportStatus" role="status" class="small-muted">未取り込み</div><button id="cancelAudioImport" class="outline" type="button" disabled>現在の1件の保存後に中断</button>
  <div id="audioImportErrors" class="import-errors study-error"></div><div id="fileStatus" class="small-muted"></div><div id="storageStatus" class="small-muted"></div>
 </div></details>
-<section class="panel" aria-labelledby="secOfflineLibrary">
- <div class="step-head"><span class="num">1</span><h2 id="secOfflineLibrary">レッスン・音声プレーヤー</h2></div>
- <details class="study-setup-details"><summary>本文データの追加・再登録（必要なときだけ）</summary>
- <p class="hint">本文217件が保存済みなら再登録は不要です。新しい端末で利用する場合のみ統合JSONを選びます。</p>
- <label class="file-input" for="offlineJsonFiles">統合JSON（全217件）を取り込む</label>
- <input id="offlineJsonFiles" class="visually-hidden" type="file" accept=".json,application/json">
- </details>
- <div class="study-reader-head"><strong>保存状況</strong><strong id="offlineTotalCount">0 / 217 レッスン</strong></div>
- <div id="offlineLibrarySummary" class="library-summary"></div>
- <div id="offlineImportStatus" class="small-muted" role="status"></div>
- <div class="library-pickers">
-   <label for="programSelect">教材プログラム</label>
-   <select id="programSelect" class="field" aria-label="3つの教材プログラム"><option value="business">ビジネス</option><option value="meeting_facilitation">会議・ファシリテーション</option><option value="colloquial">口語表現</option></select>
-   <div id="trackDetailWrap" hidden><label for="offlineCourseSelect">会議・ファシリテーションの区分</label>
-   <select id="offlineCourseSelect" class="field" aria-label="会議編またはファシリテーション編"></select></div>
-   <label for="offlineLessonSelect">レッスン</label>
-   <select id="offlineLessonSelect" class="field" aria-label="閲覧するレッスン"></select>
- </div>
- <div id="offlineLessonMeta" class="small-muted"></div>
- <div class="lesson-player">
-  <label for="audioKindSelect">このレッスンの音声</label><select id="audioKindSelect" aria-label="音声の種類"></select>
-  <div id="selectedAudioStatus" class="small-muted" role="status">未登録</div>
-  <div class="player-card"><div class="player-top"><strong id="trackTitle">音声未登録</strong></div>
-   <audio id="audioPlayer" controls preload="metadata" playsinline aria-label="レッスン音声プレーヤー"></audio>
-   <div class="audio-info"><span id="audioTime">0:00 / 0:00</span><span id="playbackState">音声を選択してください</span></div>
-  </div>
- </div>
- <details class="lesson-text-details" open><summary>本文・和訳・解説</summary><div id="offlineLessonBody" class="study-reader"></div></details>
- <p class="hint">通常・復習の本文区分をそのまま表示します。口語表現の本文はType A/B/C共通です。</p>
-</section>
-<section class="panel" aria-labelledby="sec3">
- <div class="step-head"><span class="num">3</span><h2 id="sec3">学習記録の保存</h2></div>
- <p class="hint">学習記録は端末内に保存します。「完了して次の教材へ」で、今日の未完了プログラムに進めます。</p>
- <div class="progress-card"><div><strong>選択中のレッスン</strong><span id="todayDate" class="small-muted"></span></div><div class="progress-actions"><button id="completeNextBtn" class="solid" type="button" disabled>完了して次の教材へ</button><button id="completeBtn" class="outline" type="button">学習完了にする（記録のみ）</button></div></div>
- <div id="completeState" class="small-muted">未完了</div>
- <details class="study-setup-details"><summary>学習記録のバックアップ・復元</summary><div class="inline-actions"><button class="outline" id="exportBackup" type="button">進捗JSONを保存</button><label for="backupFile" class="outline label-button">JSONから復元</label><input class="visually-hidden" type="file" id="backupFile" accept=".json,application/json"></div></details>
-</section>
+
 <details class="panel study-qa-details" id="qaDetails"><summary>実機動作チェック（必要なときだけ）</summary>
  <div class="step-head"><span class="num">4</span><h2 id="sec4">iPhone実機チェック</h2></div>
  <p class="hint">実機で確認した項目にチェックしてください。チェック状況も端末に保存されます。実機で未確認ならチェックしないでください。</p>
@@ -104,7 +114,8 @@
  <div class="pass-count"><span>合格確認</span><strong id="checkedCount">0 / 6</strong></div>
 </details>
 <details class="details"><summary>技術情報・トラブル診断</summary><div class="tech"><p>通常は「直接再生」を使用します。SW経由はRange応答の比較試験用です。</p><div class="segmented"><button id="blobMode" class="selected" type="button" aria-pressed="true">直接再生</button><button id="swMode" type="button" aria-pressed="false">SW経由</button></div><div class="inline-actions"><button class="outline" id="rangeCheck" type="button">Range応答を確認</button><button class="outline" id="reloadAudio" type="button">音声を再読み込み</button></div><p id="swStatus" class="small-muted"></p><p id="diagnostics"></p><p class="small-muted">サービスワーカーが使えない場合は、HTTPSで開いてください。サイト初回起動後は再読み込みするとSW経由試験が可能になります。</p><div class="inline-actions"><button id="copyLog" class="outline" type="button">診断ログをコピー</button><button id="requestPersist" class="outline" type="button">保存保護を要求</button></div><pre id="log" aria-label="診断ログ"></pre><div class="maintenance-danger"><p>データを消去すると音声・本文・学習記録を失います。通常は使用しないでください。</p><button id="resetData" type="button" class="danger-link">試験データだけを消去</button></div></div></details>
-<footer><p>v0.9 · 教材は端末内にのみ保存</p></footer>
+</div>
+<footer><p>v1.0 · 端末内保存</p></footer>
 <div id="toast" role="status" aria-live="polite" class="toast" hidden></div>
 </main>
 <script src="./core_20261123.js" defer></script>
