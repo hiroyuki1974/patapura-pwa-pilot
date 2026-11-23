@@ -1,6 +1,6 @@
 /* Patapura PWA audio pilot, 2026-11-23. Only shell assets are cached; audio never leaves IndexedDB. */
 'use strict';
-const VERSION='patapura-pilot-shell-v05-20261123';
+const VERSION='patapura-pilot-shell-v06-20261123';
 const SHELL=['./','./index.html','./style.css','./app.js','./lesson.js','./manifest.webmanifest','./icon.svg'];
 const DB='patapura-pwa-audio-pilot-v1';
 self.addEventListener('install', event=>{
