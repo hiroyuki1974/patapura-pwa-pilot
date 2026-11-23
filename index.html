@@ -18,9 +18,9 @@
 <main class="wrap">
 <header class="header">
  <div class="header-kicker">PATAPURA · TECHNICAL PILOT</div>
- <h1>パタプラ音声試験</h1>
+ <h1>パタプラ本文・音声試験</h1>
  <p>iPhone内のMP3を取り込み、オフライン再生と進捗保存ができるか確認します。</p>
- <div class="status-row"><span class="tag">v0.3 · 2026.11.23</span><span id="modeLabel" class="tag tag-muted">起動環境を確認中</span></div>
+ <div class="status-row"><span class="tag">v0.4 · 2026.11.23</span><span id="modeLabel" class="tag tag-muted">起動環境を確認中</span></div>
 </header>
 <section class="notice" aria-label="注意"><strong>この試験版に購入教材は含まれません。</strong> 選んだMP3はこの端末内のブラウザ保存領域に取り込まれ、当アプリからサーバーへアップロードされません。元のMP3は必ず別に保管してください。</section>
 <section class="panel" aria-labelledby="sec1">
@@ -45,6 +45,20 @@
  </div>
  <div class="inline-actions"><button class="outline" id="rangeCheck" type="button">Range応答を確認</button><button class="outline" id="reloadAudio" type="button">音声を再読み込み</button></div>
  <p class="small-muted" id="swStatus">Service Worker状態：確認中</p>
+</section>
+<section class="panel" aria-labelledby="secText">
+ <div class="step-head"><span class="num">文</span><h2 id="secText">通常版 Lesson 1 の本文</h2></div>
+ <p class="hint">公式Webの英文・和訳・解説を、ご自身の端末へ取り込んでオフライン閲覧する試験です。本文はGitHubやサーバーに保存されません。</p>
+ <div class="inline-actions"><a class="outline" href="https://patapura.com/lesson/1/" target="_blank" rel="noopener noreferrer">① 公式Lesson 1を開く</a><button class="outline" id="lessonAutoFetch" type="button">② Webから直接取得を試す</button></div>
+ <p class="hint">②で取り込めない場合は、公式ページの「音声の書き起こしテキスト」を展開し、ページ本文をコピーして下へ貼り付けてください。PCで保存したHTMLファイルも使えます。</p>
+ <label class="lesson-field-label" for="lessonPaste">公式ページからコピーした本文</label>
+ <textarea id="lessonPaste" class="lesson-paste" rows="5" placeholder="公式ページの「音声の書き起こしテキスト」を開き、本文をコピーして貼り付ける"></textarea>
+ <div class="inline-actions"><button class="solid" id="lessonImportPaste" type="button">貼り付けた本文を端末に保存</button><label class="outline label-button" for="lessonLocalFile">HTML・TXT・JSONから取り込む</label><input id="lessonLocalFile" class="visually-hidden" type="file" accept=".html,.htm,.txt,.json,text/plain,text/html,application/json"></div>
+ <div id="lessonImportStatus" class="small-muted" role="status"></div>
+ <div class="study-reader-head"><strong>本文リーダー</strong><span id="lessonState" class="small-muted">確認中</span></div>
+ <div id="lessonDisplay" class="study-reader"></div>
+ <div class="inline-actions"><button class="outline" id="lessonExport" type="button">本文JSONのバックアップを保存</button></div>
+ <p class="hint">※今回の対象は通常版Lesson 1のみです。実際の音声と本文の時間同期はまだ行いません。学習記録と既存MP3は引き継ぎます。</p>
 </section>
 <section class="panel" aria-labelledby="sec3">
  <div class="step-head"><span class="num">3</span><h2 id="sec3">学習記録の保存</h2></div>
@@ -71,4 +85,5 @@
 <div id="toast" role="status" aria-live="polite" class="toast" hidden></div>
 </main>
 <script src="./app.js" defer></script>
+<script src="./lesson.js" defer></script>
 </body></html>
