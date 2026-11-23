@@ -62,11 +62,11 @@ document.addEventListener('DOMContentLoaded',async()=>{
  p.addEventListener('change',()=>{
   const program=p.value;
   const current=$('offlineCourseSelect').value;
-  let track=program==='meeting_facilitation'?(current==='meeting'||current==='facilitation'?current:'meeting'):program==='business'?'standard':'colloquial';
   const planned=progress.dailyPlan?.ids?.[program];
+  let track=program==='meeting_facilitation'?(current==='meeting'||current==='facilitation'?current:'meeting'):program==='business'?'standard':'colloquial';
+  if(planned&&program==='meeting_facilitation')track=planned.split(':')[0];
   const id=planned?.startsWith(track+':')?planned:undefined;
   document.dispatchEvent(new CustomEvent('patapura:navigate',{detail:{track,id,kind:'main'}}));
-  syncProgram();
  });
  document.addEventListener('patapura:progress',render);
  document.addEventListener('patapura:selection',syncProgram);
