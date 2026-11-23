@@ -18,3 +18,12 @@
 .study-ja{color:var(--muted);font-size:13px}
 .study-label{font-weight:800;background:var(--blue-light);border-left:3px solid var(--blue);padding:6px 9px;border-radius:4px}
 @media(prefers-color-scheme:dark){.lesson-introduction,.study-label{background:#244454}.study-error{color:#ffa193!important}}
+
+/* Three-course offline library v0.5 */
+.library-summary{border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin:8px 0 12px;background:var(--paper)}
+.library-summary-line{margin:5px 0;font-size:12px;line-height:1.7}
+.library-pickers{display:grid;grid-template-columns:1fr;gap:7px;margin:14px 0 12px}
+.library-pickers label{font-size:12px;font-weight:800}
+.library-pickers .field{width:100%;min-height:42px;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:9px;padding:9px 12px;font-size:14px}
+.study-phase{display:inline-flex;margin:13px 0 4px;padding:5px 11px;background:var(--blue-light);color:var(--blue);border-radius:99px;font-size:12px;font-weight:800}
+@media(prefers-color-scheme:dark){.study-phase{background:#244454;color:#b5dfee}}
