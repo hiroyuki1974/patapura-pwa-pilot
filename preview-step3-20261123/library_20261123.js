@@ -81,7 +81,7 @@ async function refreshCourses(selection=progress.selection,persist=true){
 }
 function setBusy(value){
  busy=value;
- for(const id of ['offlineJsonFiles','audioFile','audioImportCourse','offlineCourseSelect','offlineLessonSelect','audioKindSelect','resetData','backupFile','programSelect'])if($(id))$(id).disabled=value;
+ for(const id of ['offlineJsonFiles','audioFile','audioImportCourse','offlineCourseSelect','offlineLessonSelect','audioKindSelect','resetData','backupFile','programSelect','unifiedLessonSelect'])if($(id))$(id).disabled=value;
  $('cancelAudioImport').disabled=!value;
 }
 function batchStatus(r){
