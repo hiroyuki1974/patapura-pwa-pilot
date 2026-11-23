@@ -12,7 +12,7 @@
 <link rel="apple-touch-icon" href="./icon.svg">
 <link rel="icon" href="./icon.svg">
 <link rel="stylesheet" href="./style_20261123.css">
-<title>今日のパタプラ｜v0.7</title>
+<title>今日のパタプラ｜v0.8</title>
 </head>
 <body>
 <main class="wrap">
@@ -20,7 +20,7 @@
  <div class="header-kicker">PATAPURA · TECHNICAL PILOT</div>
  <h1>今日のパタプラ</h1>
  <p>毎日3つのプログラムを1レッスンずつ。会議とファシリテーションは交互に進みます。</p>
- <div class="status-row"><span class="tag">v0.7 · 2026.11.23</span><span id="modeLabel" class="tag tag-muted">起動環境を確認中</span></div>
+ <div class="status-row"><span class="tag">v0.8 · 2026.11.23</span><span id="modeLabel" class="tag tag-muted">起動環境を確認中</span></div>
 </header>
 <section class="notice" aria-label="注意"><strong>この試験版に購入教材は含まれません。</strong> 選んだMP3はこの端末内のブラウザ保存領域に取り込まれ、当アプリからサーバーへアップロードされません。元のMP3は必ず別に保管してください。</section>
 <section class="panel daily-panel" id="dailyPanel" aria-labelledby="dailyHeading">
@@ -31,7 +31,21 @@
  <div class="daily-links"><a href="#secOfflineLibrary">本文・プレーヤーへ</a><a href="#audioImportPanel">MP3登録へ</a></div>
 </section>
 <details class="panel audio-import-details" id="audioImportPanel"><summary>MP3を追加・管理（必要なときだけ）</summary><div class="audio-import-content">
- <div class="step-head"><span class="num">2</span><h2 id="secAudioImport">MP3をまとめて取り込む</h2></div>
+<div class="bulk-box">
+ <h3>復習音声297本をフォルダから一括登録</h3>
+ <p class="hint">iPhoneの「ファイル」で4教材が入った<strong>パタプラ資料</strong>フォルダを選びます。フォルダ名から教材を自動判別します。初回用音声・過去の試験フォルダは除外します。</p>
+ <label for="bulkFolderFile" class="file-input">「パタプラ資料」フォルダを選ぶ</label>
+ <input id="bulkFolderFile" class="visually-hidden" type="file" webkitdirectory directory multiple accept=".mp3,audio/mpeg">
+ <p id="bulkStatus" role="status" class="small-muted">未選択。フォルダを選ぶと、登録前に音声数と不足を検査します。</p>
+ <div id="bulkReport" class="library-summary"></div>
+ <progress id="bulkProgress" class="import-progress" value="0" max="1"></progress>
+ <div class="inline-actions">
+ <button id="bulkConfirmBtn" type="button" class="solid" disabled>検査済みの復習MP3を登録開始</button>
+ <button id="bulkCancelBtn" type="button" class="outline" disabled>中断</button>
+ </div>
+ <div id="bulkErrors" class="import-errors"></div>
+ </div>
+ <div class="step-head"><span class="num">2</span><h2 id="secAudioImport">個別教材のMP3登録（予備）</h2></div>
  <p class="hint">最初に取り込み先の教材区分を選び、その教材のMP3だけを複数選択してください。同じ名前の音声が別教材にもあるため、選択した区分を必ず確認してください。</p>
  <div class="library-pickers"><label for="audioImportCourse">取り込み先の教材区分</label><select id="audioImportCourse" class="field"><option value="">区分を選択してください</option></select></div>
  <label for="audioFile" class="file-input">この区分のMP3を複数選択</label><input id="audioFile" class="visually-hidden" type="file" multiple accept=".mp3,audio/mpeg">
@@ -88,7 +102,7 @@
  <div class="pass-count"><span>合格確認</span><strong id="checkedCount">0 / 6</strong></div>
 </section>
 <details class="details"><summary>技術情報・トラブル診断</summary><div class="tech"><p>通常は「直接再生」を使用します。SW経由はRange応答の比較試験用です。</p><div class="segmented"><button id="blobMode" class="selected" type="button" aria-pressed="true">直接再生</button><button id="swMode" type="button" aria-pressed="false">SW経由</button></div><div class="inline-actions"><button class="outline" id="rangeCheck" type="button">Range応答を確認</button><button class="outline" id="reloadAudio" type="button">音声を再読み込み</button></div><p id="swStatus" class="small-muted"></p><p id="diagnostics"></p><p class="small-muted">サービスワーカーが使えない場合は、HTTPSで開いてください。サイト初回起動後は再読み込みするとSW経由試験が可能になります。</p><div class="inline-actions"><button id="copyLog" class="outline" type="button">診断ログをコピー</button><button id="requestPersist" class="outline" type="button">保存保護を要求</button></div><pre id="log" aria-label="診断ログ"></pre></div></details>
-<footer><p>v0.7試験版 · 教材は端末内にのみ保存</p><button id="resetData" type="button" class="danger-link">試験データだけを消去</button></footer>
+<footer><p>v0.8試験版 · 教材は端末内にのみ保存</p><button id="resetData" type="button" class="danger-link">試験データだけを消去</button></footer>
 <div id="toast" role="status" aria-live="polite" class="toast" hidden></div>
 </main>
 <script src="./core_20261123.js" defer></script>
@@ -96,5 +110,7 @@
 <script src="./library_20261123.js" defer></script>
 <script src="./daily_core_20261123.js" defer></script>
 <script src="./daily_20261123.js" defer></script>
+<script src="./bulk_folder_core_20261123.js" defer></script>
+<script src="./bulk_folder_20261123.js" defer></script>
 </body></html>
 
