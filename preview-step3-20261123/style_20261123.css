@@ -34,7 +34,7 @@
 
 /* v0.7 daily three-course home. No changes to purchased content or audio storage. */
 .header h1{font-size:clamp(25px,6vw,32px);line-height:1.25}
-.daily-panel{border-color:#b9d7e5;background:linear-gradient(180deg,var(--paper),var(--paper))}
+#placeholderStart:#b9d7e5;background:linear-gradient(180deg,var(--paper),var(--paper))}
 .daily-summary{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:13px 0 12px;color:var(--muted);font-size:12px}
 .daily-summary strong{color:var(--green);font-size:14px}
 .daily-cards{display:grid;gap:10px}
