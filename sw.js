@@ -65,6 +65,8 @@ self.addEventListener('fetch',event=>{
   const url=new URL(event.request.url);
   if(url.origin!==self.location.origin)return;
   const base=new URL(self.registration.scope).pathname;
+  // v0.6 trial owns its own worker, database and shell; do not return the v0.5 shell there.
+  if(url.pathname.startsWith(base+'preview-step3-20261123/'))return;
   const route=base+'_local_audio/';
   if(url.pathname.startsWith(route)){
     const id=decodeURIComponent(url.pathname.slice(route.length));
@@ -97,3 +99,4 @@ self.addEventListener('fetch',event=>{
     })());
   }
 });
+

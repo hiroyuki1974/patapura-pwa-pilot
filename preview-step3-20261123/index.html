@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#123d59">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="パタプラ試験">
+<meta name="description" content="本人の端末内音声を取り込み、PWA再生を検証する個人用試験アプリ。">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icon.svg">
+<link rel="icon" href="./icon.svg">
+<link rel="stylesheet" href="./style_20261123.css">
+<title>今日のパタプラ｜Step 3 試験版 v0.6</title>
+</head>
+<body>
+<main class="wrap">
+<header class="header">
+ <div class="header-kicker">PATAPURA · TECHNICAL PILOT</div>
+ <h1>パタプラオフライン学習試験</h1>
+ <p>iPhone内のMP3を取り込み、オフライン再生と進捗保存ができるか確認します。</p>
+ <div class="status-row"><span class="tag">v0.6 · 2026.11.23</span><span id="modeLabel" class="tag tag-muted">起動環境を確認中</span></div>
+</header>
+<section class="notice" aria-label="注意"><strong>この試験版に購入教材は含まれません。</strong> 選んだMP3はこの端末内のブラウザ保存領域に取り込まれ、当アプリからサーバーへアップロードされません。元のMP3は必ず別に保管してください。</section>
+<section class="panel" aria-labelledby="secOfflineLibrary">
+ <div class="step-head"><span class="num">文</span><h2 id="secOfflineLibrary">3教材の本文｜オフライン閲覧</h2></div>
+ <p class="hint">Step 2の表示用統合JSONを1回選択します。本文は端末内に保存され、次回からオフラインで閲覧できます。</p>
+ <label class="file-input" for="offlineJsonFiles">統合JSON（全217件）を取り込む</label>
+ <input id="offlineJsonFiles" class="visually-hidden" type="file" accept=".json,application/json">
+ <div class="study-reader-head"><strong>保存状況</strong><strong id="offlineTotalCount">0 / 217 レッスン</strong></div>
+ <div id="offlineLibrarySummary" class="library-summary"></div>
+ <div id="offlineImportStatus" class="small-muted" role="status"></div>
+ <div class="library-pickers">
+   <label for="offlineCourseSelect">教材</label>
+   <select id="offlineCourseSelect" class="field" aria-label="閲覧する教材"></select>
+   <label for="offlineLessonSelect">レッスン</label>
+   <select id="offlineLessonSelect" class="field" aria-label="閲覧するレッスン"></select>
+ </div>
+ <div id="offlineLessonMeta" class="small-muted"></div>
+ <div class="lesson-player">
+  <label for="audioKindSelect">このレッスンの音声</label><select id="audioKindSelect" aria-label="音声の種類"></select>
+  <div id="selectedAudioStatus" class="small-muted" role="status">未登録</div>
+  <div class="player-card"><div class="player-top"><strong id="trackTitle">音声未登録</strong></div>
+   <audio id="audioPlayer" controls preload="metadata" playsinline aria-label="レッスン音声プレーヤー"></audio>
+   <div class="audio-info"><span id="audioTime">0:00 / 0:00</span><span id="playbackState">音声を選択してください</span></div>
+  </div>
+ </div>
+ <div id="offlineLessonBody" class="study-reader"></div>
+ <p class="hint">通常・復習の本文区分をそのまま表示します。口語表現の本文はType A/B/C共通です。</p>
+</section>
+<section class="panel" aria-labelledby="secAudioImport">
+ <div class="step-head"><span class="num">2</span><h2 id="secAudioImport">MP3をまとめて取り込む</h2></div>
+ <p class="hint">最初に取り込み先の教材区分を選び、その教材のMP3だけを複数選択してください。同じ名前の音声が別教材にもあるため、選択した区分を必ず確認してください。</p>
+ <div class="library-pickers"><label for="audioImportCourse">取り込み先の教材区分</label><select id="audioImportCourse" class="field"><option value="">区分を選択してください</option></select></div>
+ <label for="audioFile" class="file-input">この区分のMP3を複数選択</label><input id="audioFile" class="visually-hidden" type="file" multiple accept=".mp3,audio/mpeg">
+ <progress id="audioImportProgress" class="import-progress" value="0" max="1"></progress>
+ <div id="audioImportStatus" role="status" class="small-muted">未取り込み</div><button id="cancelAudioImport" class="outline" type="button" disabled>現在の1件の保存後に中断</button>
+ <div id="audioImportErrors" class="import-errors study-error"></div><div id="fileStatus" class="small-muted"></div><div id="storageStatus" class="small-muted"></div>
+</section>
+<section class="panel" aria-labelledby="sec3">
+ <div class="step-head"><span class="num">3</span><h2 id="sec3">学習記録の保存</h2></div>
+ <p class="hint">学習完了を記録し、アプリ終了・再起動後も残るか試してください。これは既存v1.0とは別の試験データです。</p>
+ <div class="progress-card"><div><strong>選択中のレッスン</strong><span id="todayDate" class="small-muted"></span></div><button id="completeBtn" class="solid" type="button">学習完了にする</button></div>
+ <div id="completeState" class="small-muted">未完了</div>
+ <div class="inline-actions"><button class="outline" id="exportBackup" type="button">進捗JSONを保存</button><label for="backupFile" class="outline label-button">JSONから復元</label><input class="visually-hidden" type="file" id="backupFile" accept=".json,application/json"></div>
+</section>
+<section class="panel" aria-labelledby="sec4">
+ <div class="step-head"><span class="num">4</span><h2 id="sec4">iPhone実機チェック</h2></div>
+ <p class="hint">実機で確認した項目にチェックしてください。チェック状況も端末に保存されます。実機で未確認ならチェックしないでください。</p>
+ <div class="check-list" id="checkList">
+  <label><input type="checkbox" data-check="import"><span>MP3取り込み・再生ができた</span></label>
+  <label><input type="checkbox" data-check="seek"><span>シーク（早送り・巻戻し）ができた</span></label>
+  <label><input type="checkbox" data-check="lock"><span>ロック中に3分間再生し、停止・再開できた</span></label>
+  <label><input type="checkbox" data-check="offline"><span>機内モード＋Wi-Fiオフで再生できた</span></label>
+  <label><input type="checkbox" data-check="restart"><span>アプリ強制終了後も音声・進捗が残った</span></label>
+  <label><input type="checkbox" data-check="update"><span>サイトの更新後も音声・進捗が残った</span></label>
+ </div>
+ <div class="pass-count"><span>合格確認</span><strong id="checkedCount">0 / 6</strong></div>
+</section>
+<details class="details"><summary>技術情報・トラブル診断</summary><div class="tech"><p>通常は「直接再生」を使用します。SW経由はRange応答の比較試験用です。</p><div class="segmented"><button id="blobMode" class="selected" type="button" aria-pressed="true">直接再生</button><button id="swMode" type="button" aria-pressed="false">SW経由</button></div><div class="inline-actions"><button class="outline" id="rangeCheck" type="button">Range応答を確認</button><button class="outline" id="reloadAudio" type="button">音声を再読み込み</button></div><p id="swStatus" class="small-muted"></p><p id="diagnostics"></p><p class="small-muted">サービスワーカーが使えない場合は、HTTPSで開いてください。サイト初回起動後は再読み込みするとSW経由試験が可能になります。</p><div class="inline-actions"><button id="copyLog" class="outline" type="button">診断ログをコピー</button><button id="requestPersist" class="outline" type="button">保存保護を要求</button></div><pre id="log" aria-label="診断ログ"></pre></div></details>
+<footer><p>技術検証専用 · 第三者向け教材配信機能なし</p><button id="resetData" type="button" class="danger-link">試験データだけを消去</button></footer>
+<div id="toast" role="status" aria-live="polite" class="toast" hidden></div>
+</main>
+<script src="./core_20261123.js" defer></script>
+<script src="./app_20261123.js" defer></script>
+<script src="./library_20261123.js" defer></script>
+</body></html>
+

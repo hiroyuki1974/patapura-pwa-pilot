@@ -1,0 +1,8 @@
+# Private lesson text and audio must stay outside this public repository.
+*.mp3
+*.MP3
+*.zip
+PATAPURA_DISPLAY*.json
+PATAPURA_QA*.json
+private*/
+node_modules/
