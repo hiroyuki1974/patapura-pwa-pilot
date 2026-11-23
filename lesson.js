@@ -50,14 +50,16 @@ function structureText(input){
  const body=lines.slice(transcriptIndex+1,endIndex).filter(x=>!isControlLine(x));
  if(body.join('').length<90)throw Error('本文が短すぎます。公式ページの「音声の書き起こしテキスト」を展開してコピーしてください。');
  const sections=[];
- let section={heading:'レッスン本文',lines:[]};
+ let inReview=false;
+ let section={heading:'レッスン本文',lines:[],reviewOnly:false};
  for(const line of body){
    if(/^◇/.test(line)){
      if(section.lines.length)sections.push(section);
-     section={heading:line.replace(/^◇/,'').trim(),lines:[]};
+     section={heading:line.replace(/^◇/,'').trim(),lines:[],reviewOnly:inReview};
    }else if(/^〖復習音声にのみ〗/.test(line)){
      if(section.lines.length)sections.push(section);
-     section={heading:'復習音声専用',lines:[]};
+     inReview=true;
+     section={heading:'復習音声専用',lines:[],reviewOnly:true};
    }else{
      section.lines.push(line);
    }
@@ -75,7 +77,7 @@ function ensureLessonData(obj){
    if(typeof s.heading!=='string'||!Array.isArray(s.lines)||s.lines.length>2000)
      throw Error('本文JSONの構造が不正です');
    const lines=s.lines.map(x=>{if(typeof x!=='string'||x.length>20000)throw Error('本文行が不正です');return x;});
-   return {heading:s.heading.slice(0,300),lines};
+   return {heading:s.heading.slice(0,300),lines,reviewOnly:!!s.reviewOnly};
  });
  return {id:KEY,format:FORMAT,course:'standard',lesson:1,
    title:String(obj.title||'LESSON 1').slice(0,300),
@@ -103,7 +105,7 @@ function render(){
  }
  for(const sect of saved.sections){
    const section=document.createElement('section');section.className='study-section';
-   const heading=document.createElement('h4');heading.textContent=sect.heading;section.append(heading);
+   const heading=document.createElement('h4');heading.textContent=(sect.reviewOnly?'【復習音声専用】 ':'')+sect.heading;section.append(heading);
    for(const raw of sect.lines){
       const p=document.createElement('p');p.className='study-line '+lineClass(raw);
       p.textContent=raw;section.append(p);
