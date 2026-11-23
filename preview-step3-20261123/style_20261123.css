@@ -34,7 +34,7 @@
 
 /* v0.7 daily three-course home. No changes to purchased content or audio storage. */
 .header h1{font-size:clamp(25px,6vw,32px);line-height:1.25}
-#placeholderStart:#b9d7e5;background:linear-gradient(180deg,var(--paper),var(--paper))}
+.daily-panel{border-color:#b9d7e5;background:linear-gradient(180deg,var(--paper),var(--paper))}
 .daily-summary{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:13px 0 12px;color:var(--muted);font-size:12px}
 .daily-summary strong{color:var(--green);font-size:14px}
 .daily-cards{display:grid;gap:10px}
@@ -58,3 +58,13 @@
 #trackDetailWrap{display:grid;gap:4px}
 #secOfflineLibrary{scroll-margin-top:15px}
 @media(prefers-color-scheme:dark){.daily-card.daily-done{border-color:#326651}.daily-done .daily-state{background:#214834;color:#9dd6b7}.daily-open{background:#203e52;color:#c0e8fa;border-color:#42677c}}
+
+/* v0.8 folder-first bulk registration */
+.bulk-box{border:1px solid var(--line);background:var(--bg);border-radius:13px;padding:14px;margin:12px 0 24px}
+.bulk-box h3{font-size:16px;line-height:1.5;margin:0 0 6px}
+.bulk-box .file-input{margin-top:12px}
+.bulk-box .library-summary{margin-top:10px;background:var(--paper)}
+.bulk-box .inline-actions{display:flex;flex-wrap:wrap}
+.bulk-box .inline-actions .solid{font-size:13px;flex:1;min-width:195px}
+.bulk-box .inline-actions .outline{min-width:80px}
+.bulk-box #bulkReport:empty{display:none}
