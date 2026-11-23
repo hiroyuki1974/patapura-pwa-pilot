@@ -33,7 +33,7 @@ function makeButton(task){
  b.disabled=!task.id;
  b.addEventListener('click',()=>{
   const [track]=task.id.split(':');
-  document.dispatchEvent(new CustomEvent('patapura:navigate',{detail:{track,id:task.id,kind:'main'}}));
+  document.dispatchEvent(new CustomEvent('patapura:navigate',{detail:{track,id:task.id,kind:track==='colloquial'?'type_b':'review'}}));
   document.getElementById('secOfflineLibrary')?.scrollIntoView({behavior:'smooth',block:'start'});
  });
  return b;
@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
   let track=program==='meeting_facilitation'?(current==='meeting'||current==='facilitation'?current:'meeting'):program==='business'?'standard':'colloquial';
   if(planned&&program==='meeting_facilitation')track=planned.split(':')[0];
   const id=planned?.startsWith(track+':')?planned:undefined;
-  document.dispatchEvent(new CustomEvent('patapura:navigate',{detail:{track,id,kind:'main'}}));
+  document.dispatchEvent(new CustomEvent('patapura:navigate',{detail:{track,id,kind:track==='colloquial'?'type_b':'review'}}));
  });
  document.addEventListener('patapura:progress',render);
  document.addEventListener('patapura:selection',syncProgram);
