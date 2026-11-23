@@ -19,12 +19,12 @@
 <header class="header">
  <div class="header-kicker">PATAPURA · TECHNICAL PILOT</div>
  <h1>パタプラオフライン学習試験</h1>
- <p>iPhone内のMP3を取り込み、オフライン再生と進捗保存ができるか確認します。</p>
+ <p>全217レッスンの本文と、教材別MP3一括取り込みの試験版です。</p>
  <div class="status-row"><span class="tag">v0.6 · 2026.11.23</span><span id="modeLabel" class="tag tag-muted">起動環境を確認中</span></div>
 </header>
 <section class="notice" aria-label="注意"><strong>この試験版に購入教材は含まれません。</strong> 選んだMP3はこの端末内のブラウザ保存領域に取り込まれ、当アプリからサーバーへアップロードされません。元のMP3は必ず別に保管してください。</section>
 <section class="panel" aria-labelledby="secOfflineLibrary">
- <div class="step-head"><span class="num">文</span><h2 id="secOfflineLibrary">3教材の本文｜オフライン閲覧</h2></div>
+ <div class="step-head"><span class="num">1</span><h2 id="secOfflineLibrary">全217レッスンの本文</h2></div>
  <p class="hint">Step 2の表示用統合JSONを1回選択します。本文は端末内に保存され、次回からオフラインで閲覧できます。</p>
  <label class="file-input" for="offlineJsonFiles">統合JSON（全217件）を取り込む</label>
  <input id="offlineJsonFiles" class="visually-hidden" type="file" accept=".json,application/json">
@@ -60,7 +60,7 @@
 </section>
 <section class="panel" aria-labelledby="sec3">
  <div class="step-head"><span class="num">3</span><h2 id="sec3">学習記録の保存</h2></div>
- <p class="hint">学習完了を記録し、アプリ終了・再起動後も残るか試してください。これは既存v1.0とは別の試験データです。</p>
+ <p class="hint">選択中のレッスンの完了を記録します。記録はこの試験版専用で、既存v0.5とは保存領域を分けています。</p>
  <div class="progress-card"><div><strong>選択中のレッスン</strong><span id="todayDate" class="small-muted"></span></div><button id="completeBtn" class="solid" type="button">学習完了にする</button></div>
  <div id="completeState" class="small-muted">未完了</div>
  <div class="inline-actions"><button class="outline" id="exportBackup" type="button">進捗JSONを保存</button><label for="backupFile" class="outline label-button">JSONから復元</label><input class="visually-hidden" type="file" id="backupFile" accept=".json,application/json"></div>

@@ -52,3 +52,19 @@ test('v0.5 worker delegates trial; v0.6 cache and DB isolated; Range 200/206/416
  for(const [range,status,size] of [[null,200,256],['bytes=0-31',206,32],['bytes=-10',206,10],['bytes=250-',206,6],['bytes=300-',416,0],['bytes=4-2',416,0],['bytes=0-2,4-5',416,0]]){const request=new Request('https://example.com/',{headers:range?{Range:range}:{}});const r=await w.context.fetchAudio(request,'yes');assert.equal(r.status,status);assert.equal((await r.arrayBuffer()).byteLength,size);}
  assert.equal((await w.context.fetchAudio(new Request('https://example.com/'),'none')).status,404);
 });
+test('offline cached navigation and assets avoid network; activation only deletes this trial cache prefix',async()=>{
+ const source=fs.readFileSync(path.join(__dirname,'../preview-step3-20261123/sw.js'),'utf8');
+ const events={},deleted=[];let network=0,response;
+ const cached=new Response('cached shell',{status:200});
+ const cache={match:async()=>cached.clone()};
+ const context={self:{registration:{scope:'https://example.com/app/preview-step3-20261123/'},location:{origin:'https://example.com'},clients:{claim:async()=>{}},addEventListener:(n,f)=>events[n]=f},URL,Response,Set,Number,decodeURIComponent,
+  caches:{open:async()=>cache,keys:async()=>['patapura-pilot-shell-v07-20261123','unrelated-app','patapura-step3-trial-shell-v06-20261123','patapura-step3-trial-shell-v06b-20261123'],delete:async k=>deleted.push(k)},
+  fetch:async()=>{network++;throw Error('offline');}};
+ vm.createContext(context);vm.runInContext(source,context);
+ for(const [suffix,mode] of [['','navigate'],['app_20261123.js','cors']]){
+  events.fetch({request:{url:'https://example.com/app/preview-step3-20261123/'+suffix,method:'GET',mode},respondWith:p=>response=p});
+  assert.equal(await(await response).text(),'cached shell');
+ }
+ let activate;events.activate({waitUntil:p=>activate=p});await activate;
+ assert.deepEqual(deleted,['patapura-step3-trial-shell-v06-20261123']);assert.equal(network,0);
+});
