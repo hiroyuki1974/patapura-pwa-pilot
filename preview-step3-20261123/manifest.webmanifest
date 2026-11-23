@@ -1,7 +1,7 @@
 {
-  "name": "パタプラ Step 3 試験版 v0.6",
-  "short_name": "パタプラ試験",
-  "description": "端末内MP3の再生・保存・オフライン機能を試すためのPWA",
+  "name": "今日のパタプラ v0.7",
+  "short_name": "パタプラ",
+  "description": "3教材を毎日1レッスンずつ学習する個人用オフラインPWA",
   "lang": "ja",
   "start_url": "./",
   "scope": "./",
