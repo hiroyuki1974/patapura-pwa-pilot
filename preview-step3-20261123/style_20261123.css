@@ -31,3 +31,30 @@
 
 /* v0.6 / 2026-11-23 */
 .lesson-player{position:sticky;top:0;z-index:5;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px;margin:14px 0}.lesson-player .player-card{margin-top:4px;padding:8px}.lesson-player .player-top{margin-bottom:4px}.lesson-player select{min-height:40px;width:100%;font:inherit}.lesson-player .small-muted{margin:4px 0}.import-progress{width:100%;margin-top:10px}.import-errors{font-size:12px;max-height:180px;overflow:auto;overflow-wrap:anywhere}button:disabled,input:disabled,select:disabled{opacity:.55;cursor:default}
+
+/* v0.7 daily three-course home. No changes to purchased content or audio storage. */
+.header h1{font-size:clamp(25px,6vw,32px);line-height:1.25}
+.daily-panel{border-color:#b9d7e5;background:linear-gradient(180deg,var(--paper),var(--paper))}
+.daily-summary{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:13px 0 12px;color:var(--muted);font-size:12px}
+.daily-summary strong{color:var(--green);font-size:14px}
+.daily-cards{display:grid;gap:10px}
+.daily-card{padding:13px;border:1px solid var(--line);border-radius:13px;background:var(--paper);display:grid;gap:7px}
+.daily-card.daily-done{border-color:#a7d9c0}
+.daily-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.daily-top strong{font-size:15px}
+.daily-state{background:var(--bg);border-radius:99px;padding:3px 9px;font-size:11px;font-weight:700;color:var(--muted)}
+.daily-done .daily-state{background:#d8f1e4;color:#176648}
+.daily-target{font-size:14px;margin:0;color:var(--ink)}
+.daily-open{align-self:start;justify-self:start;padding:9px 18px;min-height:40px;border:1px solid #bed5e1;border-radius:10px;background:var(--blue-light);color:var(--blue);font-size:13px;font-weight:800}
+.daily-links{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;font-weight:700}
+.daily-links a{color:var(--blue)}
+.audio-import-details>summary{font-weight:800;font-size:15px;cursor:pointer}
+.audio-import-content{margin-top:16px}
+.lesson-text-details{margin-top:17px}
+.lesson-text-details>summary{cursor:pointer;padding:12px;font-weight:800;border:1px solid var(--line);background:var(--bg);border-radius:10px;margin-bottom:7px}
+.lesson-text-details:not([open]){margin-bottom:12px}
+#trackDetailWrap[hidden]{display:none}
+#trackDetailWrap label{display:block;margin-bottom:8px}
+#trackDetailWrap{display:grid;gap:4px}
+#secOfflineLibrary{scroll-margin-top:15px}
+@media(prefers-color-scheme:dark){.daily-card.daily-done{border-color:#326651}.daily-done .daily-state{background:#214834;color:#9dd6b7}.daily-open{background:#203e52;color:#c0e8fa;border-color:#42677c}}
