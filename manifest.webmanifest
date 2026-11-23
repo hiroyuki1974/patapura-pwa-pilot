@@ -1,0 +1,19 @@
+{
+  "name": "パタプラ音声PWA試験（非教材版）",
+  "short_name": "パタプラ試験",
+  "description": "端末内MP3の再生・保存・オフライン機能を試すためのPWA",
+  "lang": "ja",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#eef3f5",
+  "theme_color": "#123d59",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
