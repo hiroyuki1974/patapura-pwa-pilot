@@ -43,9 +43,15 @@ function renderProgress(){
  CASES.forEach(key=>{const input=document.querySelector(`[data-check="${key}"]`);if(input)input.checked=!!progress.checks[key];});
  $('checkedCount').textContent=CASES.filter(k=>progress.checks[k]).length+' / 6';
 }
+function readableFilename(name){
+ // Downloads may arrive with a percent-encoded filename. Decode for display only.
+ // Keep the original file metadata and stored audio unchanged.
+ try{return decodeURIComponent(name);}catch(_){return name;}
+}
 function renderStorage(){
- if(audioRecord){$('fileStatus').textContent=`保存済み：${audioRecord.filename}（${(audioRecord.size/1024/1024).toFixed(2)} MB）`;
- $('trackTitle').textContent=audioRecord.filename;}
+ if(audioRecord){const filename=readableFilename(audioRecord.filename);
+ $('fileStatus').textContent=`保存済み：${filename}（${(audioRecord.size/1024/1024).toFixed(2)} MB）`;
+ $('trackTitle').textContent=filename;}
  else{$('fileStatus').textContent='未取り込み';$('trackTitle').textContent='音声未登録';}
 }
 function urlForSW(){return new URL('./_local_audio/'+encodeURIComponent(MEDIA_ID),location.href).href;}
@@ -66,7 +72,7 @@ function refreshAudio(){
    objectURL=URL.createObjectURL(audioRecord.blob);audio.src=objectURL;log('音声ソース：IndexedDB Blob URL');
  }
  audio.load();$('playbackState').textContent='再生準備中';
- if('mediaSession'in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:'パタプラ音声PWA試験',artist:audioRecord.filename,album:'ローカル音声の実機検証'});}catch(err){log('MediaSessionメタデータ不可：'+err.message);}}
+ if('mediaSession'in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:'パタプラ音声PWA試験',artist:readableFilename(audioRecord.filename),album:'ローカル音声の実機検証'});}catch(err){log('MediaSessionメタデータ不可：'+err.message);}}
 }
 async function importFile(file){
  if(!file)return;
@@ -109,7 +115,7 @@ async function setupServiceWorker(){
 }
 function downloadBlob(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),12000);}
 async function startup(){
- log('アプリ起動：'+location.href);log('バージョン：2026-11-23 v0.2');
+ log('アプリ起動：'+location.href);log('バージョン：2026-11-23 v0.3');
  if(!('indexedDB'in window)){notice('IndexedDBに対応しない環境です');log('IDBなし：続行不可');return;}
  try{progress=(await recordGet('progress',PROGRESS_ID))||progress;audioRecord=await recordGet('audio',MEDIA_ID);renderStorage();renderProgress();refreshAudio();log('IDB復元：'+(audioRecord?'音声あり':'音声なし')+'／'+(progress.completedOn||'進捗なし'));}
  catch(err){notice('保存領域の読込に失敗しました');log('IDB読込エラー：'+err.message);}
