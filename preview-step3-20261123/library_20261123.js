@@ -14,9 +14,9 @@ function renderSummary(){
   const p=document.createElement('p');p.className='library-summary-line';
   const count=library?.lessons.filter(l=>g.tracks.includes(l.track)).length||0;
   const total=g.tracks.reduce((n,t)=>n+C.COUNTS[t],0);
-  const loaded=[...audioKeys].filter(k=>g.tracks.some(t=>k.startsWith(t+':'))).length;
-  const audioTotal=g.tracks.reduce((n,t)=>n+C.COUNTS[t]*C.kinds(t).length,0);
-  p.textContent=`${g.label}：本文 ${count} / ${total}件・音声 ${loaded} / ${audioTotal}本`;
+  const expectedKeys=g.tracks.flatMap(t=>Array.from({length:C.COUNTS[t]},(_,i)=>(t==='colloquial'?['type_b','type_c']:['review']).map(k=>C.audioId(t,i+1,k))).flat());
+  const loaded=expectedKeys.filter(k=>audioKeys.has(k)).length;
+  p.textContent=`${g.label}：本文 ${count} / ${total}件・復習音声 ${loaded} / ${expectedKeys.length}本`;
   $('offlineLibrarySummary').append(p);
  }
  $('offlineTotalCount').textContent=(library?.lessons.length||0)+' / 217 レッスン';
@@ -60,7 +60,7 @@ async function selectAudio(persist=true){
 }
 function refreshAudioKinds(preferred){
  const lesson=currentLesson(),select=$('audioKindSelect');select.replaceChildren();
- if(lesson){for(const a of C.candidates(lesson.track,lesson.number))option(select,a.kind,`${a.label}・${audioKeys.has(a.key)?'登録済み':'未登録'}`);if(C.kinds(lesson.track).includes(preferred))select.value=preferred;}
+ if(lesson){for(const a of C.candidates(lesson.track,lesson.number))option(select,a.kind,`${a.label}・${audioKeys.has(a.key)?'登録済み':'未登録'}`);const preferredKind=C.kinds(lesson.track).includes(preferred)?preferred:(lesson.track==='colloquial'?'type_b':'review');select.value=preferredKind;}
 }
 async function showLesson(persist=true,preferred){
  const lesson=currentLesson();selectedLessonId=lesson?.id||'';
@@ -118,10 +118,12 @@ document.addEventListener('DOMContentLoaded',async()=>{
  $('offlineCourseSelect').addEventListener('change',()=>refreshLessons().catch(e=>report(e.message,true)));
  $('offlineLessonSelect').addEventListener('change',()=>showLesson().catch(e=>report(e.message,true)));
  $('audioKindSelect').addEventListener('change',()=>selectAudio().catch(e=>report(e.message,true)));
+ document.addEventListener('patapura:bulk-start',()=>setBusy(true));
+ document.addEventListener('patapura:bulk-done',async()=>{try{await loadAudioKeys();renderSummary();refreshAudioKinds($('audioKindSelect').value);await selectAudio(false);await showDiagnostics();}catch(err){report('音声一覧の更新失敗：'+err.message,true);}finally{setBusy(false);}});
  document.addEventListener('patapura:navigate',e=>{
   const choice=e.detail||{};
   if(!library||!C.ORDER.includes(choice.track))return;
-  refreshCourses({track:choice.track,id:choice.id,kind:choice.kind||'main'},true).catch(err=>report(err.message,true));
+  refreshCourses({track:choice.track,id:choice.id,kind:choice.kind||(choice.track==='colloquial'?'type_b':'review')},true).catch(err=>report(err.message,true));
  });
  document.addEventListener('progressrestored',()=>refreshCourses().catch(e=>report(e.message,true)));
  document.addEventListener('trialreset',()=>{library=null;audioKeys.clear();renderSummary();refreshCourses(undefined,false);});
