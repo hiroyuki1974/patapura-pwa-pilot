@@ -9,10 +9,14 @@ function option(select,value,title){const n=document.createElement('option');n.v
 function currentLesson(){return library?.lessons.find(l=>l.id===$('offlineLessonSelect').value&&l.track===$('offlineCourseSelect').value);}
 function renderSummary(){
  $('offlineLibrarySummary').replaceChildren();
- for(const t of C.ORDER){
+ const groups=[{label:'ビジネス',tracks:['standard']},{label:'会議・ファシリテーション',tracks:['meeting','facilitation']},{label:'口語表現',tracks:['colloquial']}];
+ for(const g of groups){
   const p=document.createElement('p');p.className='library-summary-line';
-  const count=library?.lessons.filter(l=>l.track===t).length||0;
-  p.textContent=`${C.NAMES[t]}：本文 ${count} / ${C.COUNTS[t]}件・音声 ${[...audioKeys].filter(k=>k.startsWith(t+':')).length} / ${C.COUNTS[t]*C.kinds(t).length}本`;
+  const count=library?.lessons.filter(l=>g.tracks.includes(l.track)).length||0;
+  const total=g.tracks.reduce((n,t)=>n+C.COUNTS[t],0);
+  const loaded=[...audioKeys].filter(k=>g.tracks.some(t=>k.startsWith(t+':'))).length;
+  const audioTotal=g.tracks.reduce((n,t)=>n+C.COUNTS[t]*C.kinds(t).length,0);
+  p.textContent=`${g.label}：本文 ${count} / ${total}件・音声 ${loaded} / ${audioTotal}本`;
   $('offlineLibrarySummary').append(p);
  }
  $('offlineTotalCount').textContent=(library?.lessons.length||0)+' / 217 レッスン';
@@ -61,6 +65,7 @@ function refreshAudioKinds(preferred){
 async function showLesson(persist=true,preferred){
  const lesson=currentLesson();selectedLessonId=lesson?.id||'';
  renderBody(lesson);refreshAudioKinds(preferred);renderProgress();await selectAudio(persist);
+ document.dispatchEvent(new Event('patapura:selection'));
 }
 async function refreshLessons(preferred,persist=true,kind){
  const select=$('offlineLessonSelect');select.replaceChildren();
@@ -76,7 +81,7 @@ async function refreshCourses(selection=progress.selection,persist=true){
 }
 function setBusy(value){
  busy=value;
- for(const id of ['offlineJsonFiles','audioFile','audioImportCourse','offlineCourseSelect','offlineLessonSelect','audioKindSelect','resetData','backupFile'])$(id).disabled=value;
+ for(const id of ['offlineJsonFiles','audioFile','audioImportCourse','offlineCourseSelect','offlineLessonSelect','audioKindSelect','resetData','backupFile','programSelect'])if($(id))$(id).disabled=value;
  $('cancelAudioImport').disabled=!value;
 }
 function batchStatus(r){
@@ -86,7 +91,7 @@ function batchStatus(r){
 document.addEventListener('DOMContentLoaded',async()=>{
  await appReady;
  for(const t of C.ORDER)option($('audioImportCourse'),t,C.NAMES[t]);
- try{const record=await recordGet('progress',KEY);if(record)library=C.validateLibrary(record.payload);await loadAudioKeys();renderSummary();await refreshCourses(undefined,false);}
+ try{const record=await recordGet('progress',KEY);if(record)library=C.validateLibrary(record.payload);await loadAudioKeys();renderSummary();await refreshCourses(undefined,false);document.dispatchEvent(new Event('patapura:library-ready'));}
  catch(err){report('保存データの読込失敗：'+err.message,true);}
  $('offlineJsonFiles').addEventListener('change',async e=>{
   const file=e.target.files?.[0];if(!file||busy)return;setBusy(true);
@@ -113,6 +118,11 @@ document.addEventListener('DOMContentLoaded',async()=>{
  $('offlineCourseSelect').addEventListener('change',()=>refreshLessons().catch(e=>report(e.message,true)));
  $('offlineLessonSelect').addEventListener('change',()=>showLesson().catch(e=>report(e.message,true)));
  $('audioKindSelect').addEventListener('change',()=>selectAudio().catch(e=>report(e.message,true)));
+ document.addEventListener('patapura:navigate',e=>{
+  const choice=e.detail||{};
+  if(!library||!C.ORDER.includes(choice.track))return;
+  refreshCourses({track:choice.track,id:choice.id,kind:choice.kind||'main'},true).catch(err=>report(err.message,true));
+ });
  document.addEventListener('progressrestored',()=>refreshCourses().catch(e=>report(e.message,true)));
  document.addEventListener('trialreset',()=>{library=null;audioKeys.clear();renderSummary();refreshCourses(undefined,false);});
 });
