@@ -68,3 +68,13 @@
 .bulk-box .inline-actions .solid{font-size:13px;flex:1;min-width:195px}
 .bulk-box .inline-actions .outline{min-width:80px}
 .bulk-box #bulkReport:empty{display:none}
+
+/* v0.9: compact daily actions, maintenance controls collapsed. */
+.progress-card{align-items:stretch;flex-wrap:wrap}
+.progress-actions{display:grid;gap:8px;flex:1 1 190px}
+.progress-actions .solid{font-size:14px;min-height:48px}
+.progress-actions .outline{font-size:12px;min-height:40px}
+.study-setup-details{border-top:1px solid var(--line);margin:14px 0 10px;padding-top:10px}
+.study-setup-details>summary,.study-qa-details>summary{cursor:pointer;font-weight:700;color:var(--muted);font-size:13px}
+.study-setup-details>.file-input{margin:10px 0}
+.maintenance-danger{border-top:1px solid var(--line);padding-top:10px;margin-top:12px}
