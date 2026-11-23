@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#123d59">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="パタプラ試験">
+<meta name="description" content="本人の端末内音声を取り込み、PWA再生を検証する個人用試験アプリ。">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icon.svg">
+<link rel="icon" href="./icon.svg">
+<link rel="stylesheet" href="./style.css">
+<title>今日のパタプラ｜音声PWA実機試験</title>
+</head>
+<body>
+<main class="wrap">
+<header class="header">
+ <div class="header-kicker">PATAPURA · TECHNICAL PILOT</div>
+ <h1>パタプラ音声試験</h1>
+ <p>iPhone内のMP3を取り込み、オフライン再生と進捗保存ができるか確認します。</p>
+ <div class="status-row"><span class="tag">v0.1 · 2026.11.23</span><span id="modeLabel" class="tag tag-muted">起動環境を確認中</span></div>
+</header>
+<section class="notice" aria-label="注意"><strong>この試験版に購入教材は含まれません。</strong> 選んだMP3はこの端末内のブラウザ保存領域に取り込まれ、当アプリからサーバーへアップロードされません。元のMP3は必ず別に保管してください。</section>
+<section class="panel" aria-labelledby="sec1">
+ <div class="step-head"><span class="num">1</span><h2 id="sec1">音声を取り込む</h2></div>
+ <p class="hint">iPhoneの「ファイル」にあるMP3を1本選びます。実際の教材でも、別添の試験音声でも構いません。</p>
+ <label for="audioFile" class="file-input"> <span aria-hidden="true">＋</span> MP3ファイルを選ぶ </label>
+ <input id="audioFile" class="visually-hidden" type="file" accept=".mp3,audio/mpeg,audio/mp3,audio/*">
+ <div id="fileStatus" class="file-status" role="status">未取り込み</div>
+ <div id="storageStatus" class="small-muted"></div>
+</section>
+<section class="panel" aria-labelledby="sec2">
+ <div class="step-head"><span class="num">2</span><h2 id="sec2">再生方法を比較</h2></div>
+ <p class="hint">最初は「直接再生」を試し、次に「Service Worker経由」を試してください。切替時に再生位置はリセットされます。</p>
+ <div class="segmented" role="group" aria-label="音声の読み込み方式">
+   <button id="blobMode" class="selected" type="button" aria-pressed="true">直接再生 <small>Blob URL</small></button>
+   <button id="swMode" type="button" aria-pressed="false">SW経由 <small>Range対応</small></button>
+ </div>
+ <div class="player-card">
+  <div class="player-top"><span class="disc" aria-hidden="true">♫</span><div><strong>テストレッスン</strong><span id="trackTitle">音声未登録</span></div></div>
+  <audio id="audioPlayer" controls preload="metadata" playsinline aria-label="テスト音声プレイヤー"></audio>
+  <div class="audio-info"><span id="audioTime">0:00 / 0:00</span><span id="playbackState">音声を選択してください</span></div>
+ </div>
+ <div class="inline-actions"><button class="outline" id="rangeCheck" type="button">Range応答を確認</button><button class="outline" id="reloadAudio" type="button">音声を再読み込み</button></div>
+ <p class="small-muted" id="swStatus">Service Worker状態：確認中</p>
+</section>
+<section class="panel" aria-labelledby="sec3">
+ <div class="step-head"><span class="num">3</span><h2 id="sec3">学習記録の保存</h2></div>
+ <p class="hint">学習完了を記録し、アプリ終了・再起動後も残るか試してください。これは既存v1.0とは別の試験データです。</p>
+ <div class="progress-card"><div><strong>テストレッスン</strong><span id="todayDate" class="small-muted"></span></div><button id="completeBtn" class="solid" type="button">学習完了にする</button></div>
+ <div id="completeState" class="small-muted">未完了</div>
+ <div class="inline-actions"><button class="outline" id="exportBackup" type="button">進捗JSONを保存</button><label for="backupFile" class="outline label-button">JSONから復元</label><input class="visually-hidden" type="file" id="backupFile" accept=".json,application/json"></div>
+</section>
+<section class="panel" aria-labelledby="sec4">
+ <div class="step-head"><span class="num">4</span><h2 id="sec4">iPhone実機チェック</h2></div>
+ <p class="hint">実機で確認した項目にチェックしてください。チェック状況も端末に保存されます。実機で未確認ならチェックしないでください。</p>
+ <div class="check-list" id="checkList">
+  <label><input type="checkbox" data-check="import"><span>MP3取り込み・再生ができた</span></label>
+  <label><input type="checkbox" data-check="seek"><span>シーク（早送り・巻戻し）ができた</span></label>
+  <label><input type="checkbox" data-check="lock"><span>ロック中に3分間再生し、停止・再開できた</span></label>
+  <label><input type="checkbox" data-check="offline"><span>機内モード＋Wi-Fiオフで再生できた</span></label>
+  <label><input type="checkbox" data-check="restart"><span>アプリ強制終了後も音声・進捗が残った</span></label>
+  <label><input type="checkbox" data-check="update"><span>サイトの更新後も音声・進捗が残った</span></label>
+ </div>
+ <div class="pass-count"><span>合格確認</span><strong id="checkedCount">0 / 6</strong></div>
+</section>
+<details class="details"><summary>技術情報・トラブル診断</summary><div class="tech"><p id="diagnostics"></p><p class="small-muted">サービスワーカーが使えない場合は、HTTPSで開いてください。サイト初回起動後は再読み込みするとSW経由試験が可能になります。</p><div class="inline-actions"><button id="copyLog" class="outline" type="button">診断ログをコピー</button><button id="requestPersist" class="outline" type="button">保存保護を要求</button></div><pre id="log" aria-label="診断ログ"></pre></div></details>
+<footer><p>技術検証専用 · 第三者向け教材配信機能なし</p><button id="resetData" type="button" class="danger-link">試験データだけを消去</button></footer>
+<div id="toast" role="status" aria-live="polite" class="toast" hidden></div>
+</main>
+<script src="./app.js" defer></script>
+</body></html>
