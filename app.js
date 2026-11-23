@@ -95,6 +95,11 @@ async function setupServiceWorker(){
  if(location.protocol!=='https:'&&location.hostname!=='localhost'&&location.hostname!=='127.0.0.1'){
  log('HTTPSではないためSW登録できません');await showDiagnostics();return;
  }
+ // When offline, keep the already-installed worker; do not explicitly recheck the network.
+ if(navigator.onLine===false && navigator.serviceWorker.controller){
+   log('オフライン：既存Service Workerを利用し、登録・更新チェックを省略');
+   await showDiagnostics();return;
+ }
  navigator.serviceWorker.addEventListener('controllerchange',()=>{log('Service Worker controllerchange');showDiagnostics().then(()=>{if(playMode==='sw')refreshAudio();});});
  try{const reg=await navigator.serviceWorker.register('./sw.js',{scope:'./'});
  log('Service Worker登録：'+reg.scope);
@@ -104,7 +109,7 @@ async function setupServiceWorker(){
 }
 function downloadBlob(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),12000);}
 async function startup(){
- log('アプリ起動：'+location.href);log('バージョン：2026-11-23 v0.1');
+ log('アプリ起動：'+location.href);log('バージョン：2026-11-23 v0.2');
  if(!('indexedDB'in window)){notice('IndexedDBに対応しない環境です');log('IDBなし：続行不可');return;}
  try{progress=(await recordGet('progress',PROGRESS_ID))||progress;audioRecord=await recordGet('audio',MEDIA_ID);renderStorage();renderProgress();refreshAudio();log('IDB復元：'+(audioRecord?'音声あり':'音声なし')+'／'+(progress.completedOn||'進捗なし'));}
  catch(err){notice('保存領域の読込に失敗しました');log('IDB読込エラー：'+err.message);}
