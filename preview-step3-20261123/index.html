@@ -12,17 +12,33 @@
 <link rel="apple-touch-icon" href="./icon.svg">
 <link rel="icon" href="./icon.svg">
 <link rel="stylesheet" href="./style_20261123.css">
-<title>今日のパタプラ｜Step 3 試験版 v0.6</title>
+<title>今日のパタプラ｜v0.7</title>
 </head>
 <body>
 <main class="wrap">
 <header class="header">
  <div class="header-kicker">PATAPURA · TECHNICAL PILOT</div>
- <h1>パタプラオフライン学習試験</h1>
- <p>全217レッスンの本文と、教材別MP3一括取り込みの試験版です。</p>
- <div class="status-row"><span class="tag">v0.6 · 2026.11.23</span><span id="modeLabel" class="tag tag-muted">起動環境を確認中</span></div>
+ <h1>今日のパタプラ</h1>
+ <p>毎日3つのプログラムを1レッスンずつ。会議とファシリテーションは交互に進みます。</p>
+ <div class="status-row"><span class="tag">v0.7 · 2026.11.23</span><span id="modeLabel" class="tag tag-muted">起動環境を確認中</span></div>
 </header>
 <section class="notice" aria-label="注意"><strong>この試験版に購入教材は含まれません。</strong> 選んだMP3はこの端末内のブラウザ保存領域に取り込まれ、当アプリからサーバーへアップロードされません。元のMP3は必ず別に保管してください。</section>
+<section class="panel daily-panel" id="dailyPanel" aria-labelledby="dailyHeading">
+ <div class="step-head"><span class="num">✓</span><h2 id="dailyHeading">今日の学習</h2></div>
+ <div class="daily-summary"><span id="dailyDate">読み込み中</span><strong id="dailyCount">0 / 3 完了</strong></div>
+ <div id="dailyCards" class="daily-cards"></div>
+ <p class="hint" id="dailyMessage">ビジネス・会議／ファシリ・口語表現を1回ずつ学習します。</p>
+ <div class="daily-links"><a href="#secOfflineLibrary">本文・プレーヤーへ</a><a href="#audioImportPanel">MP3登録へ</a></div>
+</section>
+<details class="panel audio-import-details" id="audioImportPanel"><summary>MP3を追加・管理（必要なときだけ）</summary><div class="audio-import-content">
+ <div class="step-head"><span class="num">2</span><h2 id="secAudioImport">MP3をまとめて取り込む</h2></div>
+ <p class="hint">最初に取り込み先の教材区分を選び、その教材のMP3だけを複数選択してください。同じ名前の音声が別教材にもあるため、選択した区分を必ず確認してください。</p>
+ <div class="library-pickers"><label for="audioImportCourse">取り込み先の教材区分</label><select id="audioImportCourse" class="field"><option value="">区分を選択してください</option></select></div>
+ <label for="audioFile" class="file-input">この区分のMP3を複数選択</label><input id="audioFile" class="visually-hidden" type="file" multiple accept=".mp3,audio/mpeg">
+ <progress id="audioImportProgress" class="import-progress" value="0" max="1"></progress>
+ <div id="audioImportStatus" role="status" class="small-muted">未取り込み</div><button id="cancelAudioImport" class="outline" type="button" disabled>現在の1件の保存後に中断</button>
+ <div id="audioImportErrors" class="import-errors study-error"></div><div id="fileStatus" class="small-muted"></div><div id="storageStatus" class="small-muted"></div>
+</div></details>
 <section class="panel" aria-labelledby="secOfflineLibrary">
  <div class="step-head"><span class="num">1</span><h2 id="secOfflineLibrary">全217レッスンの本文</h2></div>
  <p class="hint">Step 2の表示用統合JSONを1回選択します。本文は端末内に保存され、次回からオフラインで閲覧できます。</p>
@@ -32,8 +48,10 @@
  <div id="offlineLibrarySummary" class="library-summary"></div>
  <div id="offlineImportStatus" class="small-muted" role="status"></div>
  <div class="library-pickers">
-   <label for="offlineCourseSelect">教材</label>
-   <select id="offlineCourseSelect" class="field" aria-label="閲覧する教材"></select>
+   <label for="programSelect">教材プログラム</label>
+   <select id="programSelect" class="field" aria-label="3つの教材プログラム"><option value="business">ビジネス</option><option value="meeting_facilitation">会議・ファシリテーション</option><option value="colloquial">口語表現</option></select>
+   <div id="trackDetailWrap" hidden><label for="offlineCourseSelect">会議・ファシリテーションの区分</label>
+   <select id="offlineCourseSelect" class="field" aria-label="会議編またはファシリテーション編"></select></div>
    <label for="offlineLessonSelect">レッスン</label>
    <select id="offlineLessonSelect" class="field" aria-label="閲覧するレッスン"></select>
  </div>
@@ -46,17 +64,8 @@
    <div class="audio-info"><span id="audioTime">0:00 / 0:00</span><span id="playbackState">音声を選択してください</span></div>
   </div>
  </div>
- <div id="offlineLessonBody" class="study-reader"></div>
+ <details class="lesson-text-details" open><summary>本文・和訳・解説</summary><div id="offlineLessonBody" class="study-reader"></div></details>
  <p class="hint">通常・復習の本文区分をそのまま表示します。口語表現の本文はType A/B/C共通です。</p>
-</section>
-<section class="panel" aria-labelledby="secAudioImport">
- <div class="step-head"><span class="num">2</span><h2 id="secAudioImport">MP3をまとめて取り込む</h2></div>
- <p class="hint">最初に取り込み先の教材区分を選び、その教材のMP3だけを複数選択してください。同じ名前の音声が別教材にもあるため、選択した区分を必ず確認してください。</p>
- <div class="library-pickers"><label for="audioImportCourse">取り込み先の教材区分</label><select id="audioImportCourse" class="field"><option value="">区分を選択してください</option></select></div>
- <label for="audioFile" class="file-input">この区分のMP3を複数選択</label><input id="audioFile" class="visually-hidden" type="file" multiple accept=".mp3,audio/mpeg">
- <progress id="audioImportProgress" class="import-progress" value="0" max="1"></progress>
- <div id="audioImportStatus" role="status" class="small-muted">未取り込み</div><button id="cancelAudioImport" class="outline" type="button" disabled>現在の1件の保存後に中断</button>
- <div id="audioImportErrors" class="import-errors study-error"></div><div id="fileStatus" class="small-muted"></div><div id="storageStatus" class="small-muted"></div>
 </section>
 <section class="panel" aria-labelledby="sec3">
  <div class="step-head"><span class="num">3</span><h2 id="sec3">学習記録の保存</h2></div>
@@ -79,11 +88,13 @@
  <div class="pass-count"><span>合格確認</span><strong id="checkedCount">0 / 6</strong></div>
 </section>
 <details class="details"><summary>技術情報・トラブル診断</summary><div class="tech"><p>通常は「直接再生」を使用します。SW経由はRange応答の比較試験用です。</p><div class="segmented"><button id="blobMode" class="selected" type="button" aria-pressed="true">直接再生</button><button id="swMode" type="button" aria-pressed="false">SW経由</button></div><div class="inline-actions"><button class="outline" id="rangeCheck" type="button">Range応答を確認</button><button class="outline" id="reloadAudio" type="button">音声を再読み込み</button></div><p id="swStatus" class="small-muted"></p><p id="diagnostics"></p><p class="small-muted">サービスワーカーが使えない場合は、HTTPSで開いてください。サイト初回起動後は再読み込みするとSW経由試験が可能になります。</p><div class="inline-actions"><button id="copyLog" class="outline" type="button">診断ログをコピー</button><button id="requestPersist" class="outline" type="button">保存保護を要求</button></div><pre id="log" aria-label="診断ログ"></pre></div></details>
-<footer><p>技術検証専用 · 第三者向け教材配信機能なし</p><button id="resetData" type="button" class="danger-link">試験データだけを消去</button></footer>
+<footer><p>v0.7試験版 · 教材は端末内にのみ保存</p><button id="resetData" type="button" class="danger-link">試験データだけを消去</button></footer>
 <div id="toast" role="status" aria-live="polite" class="toast" hidden></div>
 </main>
 <script src="./core_20261123.js" defer></script>
 <script src="./app_20261123.js" defer></script>
 <script src="./library_20261123.js" defer></script>
+<script src="./daily_core_20261123.js" defer></script>
+<script src="./daily_20261123.js" defer></script>
 </body></html>
 
