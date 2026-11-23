@@ -27,10 +27,12 @@ function detail(snapshot){
  }
 }
 document.addEventListener('DOMContentLoaded',()=>{
+ const launcher=document.querySelector('a[href="#audioImportPanel"]');
+ if(launcher)launcher.addEventListener('click',event=>{event.preventDefault();$('audioImportPanel').open=true;$('audioImportPanel').scrollIntoView({behavior:'smooth',block:'start'});});
  const input=$('bulkFolderFile'),button=$('bulkConfirmBtn'),stop=$('bulkCancelBtn'),meter=$('bulkProgress');
  input.addEventListener('change',()=>{
   if(working)return;
-  snapshot=null;button.disabled=true;meter.max=1;meter.value=0;
+  snapshot=null;button.disabled=true;meter.max=1;meter.value=0;$('bulkErrors').replaceChildren();
   const files=Array.from(input.files||[]);
   if(!files.length){write('フォルダが選択されていません');return;}
   try{
@@ -47,7 +49,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  stop.addEventListener('click',()=>{cancel=true;stop.disabled=true;write('停止要求を受け付けました。現在の1本の保存後に中断します。');});
  button.addEventListener('click',async()=>{
   if(working||!snapshot?.ok)return;
-  working=true;cancel=false;button.disabled=true;stop.disabled=false;input.disabled=true;
+  working=true;cancel=false;button.disabled=true;stop.disabled=false;input.disabled=true;$('bulkErrors').replaceChildren();
   document.dispatchEvent(new Event('patapura:bulk-start'));
   const entries=snapshot.entries.slice(),total=entries.length;
   let processed=0,saved=0,skipped=0,errors=0,stoppedByError=false;
