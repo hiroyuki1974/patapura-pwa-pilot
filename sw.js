@@ -1,6 +1,6 @@
 /* Patapura PWA audio pilot, 2026-11-23. Only shell assets are cached; audio never leaves IndexedDB. */
 'use strict';
-const VERSION='patapura-pilot-shell-v01-20261123';
+const VERSION='patapura-pilot-shell-v02-20261123';
 const SHELL=['./','./index.html','./style.css','./app.js','./manifest.webmanifest','./icon.svg'];
 const DB='patapura-pwa-audio-pilot-v1';
 self.addEventListener('install', event=>{
@@ -71,17 +71,29 @@ self.addEventListener('fetch',event=>{
     event.respondWith(fetchAudio(event.request,id));return;
   }
   if(event.request.method!=='GET')return;
+  // Offline-first: use precached app shell without first trying the network.
+  // This avoids avoidable connection attempts that may trigger iOS airplane-mode alerts.
   if(event.request.mode==='navigate'){
     event.respondWith((async()=>{
-      try{const fresh=await fetch(event.request);if(fresh.ok){const c=await caches.open(VERSION);c.put('./index.html',fresh.clone());}return fresh;}
-      catch(_){const cached=await caches.match('./index.html',{ignoreSearch:true});return cached||Response.error();}
+      const cached=await caches.match('./index.html',{ignoreSearch:true});
+      if(cached)return cached;
+      try{
+        const fresh=await fetch(event.request);
+        if(fresh.ok){const c=await caches.open(VERSION);await c.put('./index.html',fresh.clone());}
+        return fresh;
+      }catch(_){return new Response('アプリを一度オンラインで起動してキャッシュを準備してください。',{status:503,headers:{'Content-Type':'text/plain; charset=utf-8'}});}
     })());return;
   }
   const allowed=new Set(SHELL.map(u=>new URL(u,self.registration.scope).pathname));
   if(allowed.has(url.pathname)){
     event.respondWith((async()=>{
-      try{const fresh=await fetch(event.request);if(fresh.ok){const c=await caches.open(VERSION);c.put(event.request,fresh.clone());}return fresh;}
-      catch(_){return await caches.match(event.request)||Response.error();}
+      const cached=await caches.match(event.request,{ignoreSearch:true});
+      if(cached)return cached;
+      try{
+        const fresh=await fetch(event.request);
+        if(fresh.ok){const c=await caches.open(VERSION);await c.put(event.request,fresh.clone());}
+        return fresh;
+      }catch(_){return Response.error();}
     })());
   }
 });
