@@ -1,4 +1,4 @@
-/* build:v12r2-20261124 */
+/* build:v13-20261124 */
 /* パタプラ v0.7 今日の3レッスン／3教材プログラム */
 (function(){
 'use strict';
@@ -11,7 +11,7 @@ const groupOf=id=>id?.startsWith('meeting:')||id?.startsWith('facilitation:')?'m
 function shortLabel(id){if(!id)return '終了';const [track,n]=id.split(':');return track==='meeting'?'会議 '+n:track==='facilitation'?'ファシリ '+n:'Lesson '+n;}
 function showView(view){for(const k of ['Study','Records','Settings']){$(k.toLowerCase()+'View').hidden=k!==view;$('show'+k).setAttribute('aria-pressed',String(k===view));}if(view==='Records')renderRecords();}
 function syncUnified(){const select=$('unifiedLessonSelect');const actual=$('offlineLessonSelect').value;const group=actual?groupOf(actual):$('programSelect').value;const p=D.PROGRAMS.find(x=>x.key===group);select.replaceChildren();if(!p||!actual){select.disabled=true;return;}select.disabled=false;for(const [i,id] of p.sequence.entries()){const o=document.createElement('option');o.value=id;o.textContent=group==='meeting_facilitation'?String(i+1).padStart(2,'0')+'｜'+shortLabel(id):shortLabel(id);select.append(o);}select.value=actual;}
-function openRecord(id,round){showView('Study');const track=id.split(':')[0];document.dispatchEvent(new CustomEvent('patapura:navigate',{detail:{track,id,round:round||D.roundForLesson(progress,id,localDate()),kind:track==='colloquial'?'type_b':'review'}}));$('secOfflineLibrary').scrollIntoView({behavior:'smooth',block:'start'});}
+function openRecord(id,round){showView('Study');const track=id.split(':')[0];document.dispatchEvent(new CustomEvent('patapura:navigate',{detail:{track,id,round:round||D.roundForLesson(progress,id,localDate()),kind:track==='colloquial'?preferredColloquialKind():'review'}}));$('secOfflineLibrary').scrollIntoView({behavior:'smooth',block:'start'});}
 function closeEdit(){if(editBusy)return;editing=null;$('recordEdit').hidden=true;$('recordEditStatus').textContent='';}
 function openEdit(id,round){if(editBusy)return;editing={id,round};$('recordEditTitle').textContent=shortLabel(id)+'・'+round+'周目';const date=D.readDate(progress,id,round);$('recordDate').value=date||localDate();$('recordClear').disabled=!date;$('recordEditStatus').textContent='';$('recordEdit').hidden=false;$('recordEdit').scrollIntoView({behavior:'smooth',block:'nearest'});}
 async function saveEdit(remove=false){
@@ -83,7 +83,7 @@ function makeButton(task){
  b.disabled=!task.id;
  b.addEventListener('click',()=>{
   const [track]=task.id.split(':');
-  document.dispatchEvent(new CustomEvent('patapura:navigate',{detail:{track,id:task.id,round:task.round,kind:track==='colloquial'?'type_b':'review'}}));
+  document.dispatchEvent(new CustomEvent('patapura:navigate',{detail:{track,id:task.id,round:task.round,kind:track==='colloquial'?preferredColloquialKind():'review'}}));
   document.getElementById('secOfflineLibrary')?.scrollIntoView({behavior:'smooth',block:'start'});
  });
  return b;
@@ -111,6 +111,9 @@ function render(){
 }
 document.addEventListener('DOMContentLoaded',async()=>{
  setupTheme();setupFontSize();
+ $('backToTop')?.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+ const pref=$('colloquialPreference');
+ pref?.addEventListener('change',()=>{const kind=pref.value==='type_c'?'type_c':'type_b';try{localStorage.setItem('patapura-colloquial-kind',kind);}catch(_){}document.dispatchEvent(new Event('patapura:audio-preference'));});
  $('showStudy').addEventListener('click',()=>showView('Study'));
  $('showRecords').addEventListener('click',()=>showView('Records'));
  $('showSettings').addEventListener('click',()=>showView('Settings'));
@@ -123,17 +126,18 @@ document.addEventListener('DOMContentLoaded',async()=>{
  document.addEventListener('patapura:library-ready',syncUnified);
  document.addEventListener('patapura:progress',()=>{if(!$('recordsView').hidden)renderRecords();});
  await appReady;startupComplete=true;
+ if(pref){pref.value=preferredColloquialKind();try{localStorage.setItem('patapura-colloquial-kind',pref.value);}catch(_){}}
  await ensureDaily();
  render();syncUnified();
  const p=$('programSelect');
  p.addEventListener('change',()=>{
   const program=p.value;
   const current=$('offlineCourseSelect').value;
-  const planned=progress.dailyPlan?.ids?.[program];
+  const planned=D.plan(progress,localDate()).ids[program];
   let track=program==='meeting_facilitation'?(current==='meeting'||current==='facilitation'?current:'meeting'):program==='business'?'standard':'colloquial';
   if(planned&&program==='meeting_facilitation')track=planned.split(':')[0];
   const id=planned?.startsWith(track+':')?planned:undefined;
-  document.dispatchEvent(new CustomEvent('patapura:navigate',{detail:{track,id,round:D.plan(progress,localDate()).rounds[program],kind:track==='colloquial'?'type_b':'review'}}));
+  document.dispatchEvent(new CustomEvent('patapura:navigate',{detail:{track,id,round:D.plan(progress,localDate()).rounds[program],kind:track==='colloquial'?preferredColloquialKind():'review'}}));
  });
  document.addEventListener('patapura:progress',render);
  document.addEventListener('patapura:selection',syncProgram);
