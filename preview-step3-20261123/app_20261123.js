@@ -1,7 +1,7 @@
-/* build:v14push0500-20261124 */
+/* build:v15player-20261125 */
 'use strict';
 const DB_NAME='patapura-pwa-step3-trial-v1';
-const APP_BUILD='v14push0500-20261124';
+const APP_BUILD='v15player-20261125';
 let swRegistration=null,checkingAppUpdate=false;
 const DB_VERSION=1;
 let MEDIA_ID='unselected';
@@ -78,15 +78,16 @@ function chooseMode(mode){
 function refreshAudio(){
  audio.pause();audio.removeAttribute('src');audio.load();
  if(objectURL){URL.revokeObjectURL(objectURL);objectURL=null;}
- if(!audioRecord)return;
+ updateTime(true);syncPlayerControls();
+ if(!audioRecord){$('playbackState').textContent='音声未登録';return;}
  if(playMode==='sw'){
    if(!serviceWorkerReady){$('playbackState').textContent='SW未制御：再読み込みしてください';log('SW経由モード未制御（再読み込みで改善する場合あり）');return;}
    audio.src=urlForSW();log('音声ソース：SW Range '+urlForSW());
  }else{
    objectURL=URL.createObjectURL(audioRecord.blob);audio.src=objectURL;log('音声ソース：IndexedDB Blob URL');
  }
- audio.load();$('playbackState').textContent='再生準備中';
- if('mediaSession'in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:selectedLessonId+' / '+readableFilename(audioRecord.filename),artist:'パタプラ個人学習',album:'Patapura v1.4'});}catch(err){log('MediaSessionメタデータ不可：'+err.message);}}
+ audio.playbackRate=1;audio.defaultPlaybackRate=1;audio.load();$('playbackState').textContent='再生準備中';syncPlayerControls();
+ if('mediaSession'in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:selectedLessonId+' / '+readableFilename(audioRecord.filename),artist:'パタプラ個人学習',album:'Patapura v1.5'});}catch(err){log('MediaSessionメタデータ不可：'+err.message);}}
 }
 async function showDiagnostics(){
  const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
@@ -147,7 +148,7 @@ async function checkAppUpdate(){
 $('checkAppUpdate')?.addEventListener('click',checkAppUpdate);
 function downloadBlob(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),12000);}
 async function startup(){
- log('アプリ起動：'+location.href);log('バージョン：2026-11-24 v1.4');
+ log('アプリ起動：'+location.href);log('バージョン：2026-11-25 v1.5');
  if(!('indexedDB'in window)){notice('IndexedDBに対応しない環境です');log('IDBなし：続行不可');return;}
  try{progress=(await recordGet('progress',PROGRESS_ID))||progress;audioRecord=await recordGet('audio',MEDIA_ID);renderStorage();renderProgress();refreshAudio();log('IDB復元：'+(audioRecord?'音声あり':'音声なし')+'／'+(progress.completedOn||'進捗なし'));}
  catch(err){notice('保存領域の読込に失敗しました');log('IDB読込エラー：'+err.message);}
@@ -219,13 +220,36 @@ $('resetData').addEventListener('click',async()=>{
  audioRecord=null;progress={id:PROGRESS_ID,completedOn:null,checks:{}};refreshAudio();renderStorage();renderProgress();await showDiagnostics();notice('試験データを消去しました');log('試験データ削除');document.dispatchEvent(new Event('trialreset'));}
  catch(err){log('削除失敗：'+err.message);notice('削除できませんでした');}
 });
-audio.addEventListener('error',()=>{if(audio.error){$('playbackState').textContent='再生エラー（診断ログ参照）';log('audio.error code='+audio.error.code+' message='+audio.error.message);}});
+const seek=$('audioSeek'),playButton=$('playAudio'),pauseButton=$('pauseAudio');
+function hasAudioSource(){return Boolean(audioRecord&&audio.getAttribute('src')&&!audio.error);}
+function syncPlayerControls(){
+ const available=hasAudioSource(),playing=available&&!audio.paused&&!audio.ended;
+ if(playButton)playButton.disabled=!available||playing;
+ if(pauseButton)pauseButton.disabled=!playing;
+ if(seek)seek.disabled=!available||!Number.isFinite(audio.duration)||audio.duration<=0;
+}
+function updateTime(reset=false){
+ const duration=reset?0:(Number.isFinite(audio.duration)?audio.duration:0),position=reset?0:(Number.isFinite(audio.currentTime)?audio.currentTime:0);
+ $('audioTime').textContent=formatDuration(position)+' / '+formatDuration(duration);
+ if(seek){seek.max=String(duration||1);seek.value=String(Math.min(position,duration));seek.setAttribute('aria-valuetext',formatDuration(position)+' / '+formatDuration(duration));}
+ syncPlayerControls();
+}
+function startAudio(){
+ if(!hasAudioSource())return;
+ try{const promise=audio.play();if(promise)promise.catch(err=>{if(err.name==='AbortError')return;$('playbackState').textContent='再生できません。再度お試しください。';log('再生失敗：'+err.message);syncPlayerControls();});}
+ catch(err){$('playbackState').textContent='再生できません。再度お試しください。';syncPlayerControls();}
+}
+playButton?.addEventListener('click',startAudio);
+pauseButton?.addEventListener('click',()=>audio.pause());
+seek?.addEventListener('input',()=>{if(!hasAudioSource()||!Number.isFinite(audio.duration)||audio.duration<=0)return;const t=Number(seek.value);if(!Number.isFinite(t))return;try{audio.currentTime=Math.min(audio.duration,Math.max(0,t));updateTime();}catch(_){}});
+audio.addEventListener('error',()=>{if(audio.error){$('playbackState').textContent='再生エラー（診断ログ参照）';log('audio.error code='+audio.error.code+' message='+audio.error.message);}syncPlayerControls();});
 audio.addEventListener('loadedmetadata',()=>{log('音声読込：'+formatDuration(audio.duration));updateTime();});
-audio.addEventListener('play',()=>{log('音声再生開始：'+playMode);$('playbackState').textContent='再生中';});
-audio.addEventListener('pause',()=>{$('playbackState').textContent='一時停止';});
-audio.addEventListener('ended',()=>{$('playbackState').textContent='再生終了';log('音声再生終了');});
-function updateTime(){$('audioTime').textContent=formatDuration(audio.currentTime)+' / '+formatDuration(audio.duration);}
-audio.addEventListener('timeupdate',updateTime);
+audio.addEventListener('durationchange',()=>updateTime());
+audio.addEventListener('emptied',()=>updateTime(true));
+audio.addEventListener('play',()=>{log('音声再生開始：'+playMode);$('playbackState').textContent='再生中';syncPlayerControls();});
+audio.addEventListener('pause',()=>{$('playbackState').textContent='一時停止';syncPlayerControls();});
+audio.addEventListener('ended',()=>{$('playbackState').textContent='再生終了';log('音声再生終了');updateTime();});
+audio.addEventListener('timeupdate',()=>updateTime());
 window.addEventListener('pageshow',()=>{showDiagnostics();renderProgress();});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)showDiagnostics();});
 const appReady=startup();
