@@ -1,7 +1,7 @@
-/* build:v16resume-20261125 */
+/* build:v17controls-20261125 */
 'use strict';
 const DB_NAME='patapura-pwa-step3-trial-v1';
-const APP_BUILD='v16resume-20261125';
+const APP_BUILD='v17controls-20261125';
 let swRegistration=null,checkingAppUpdate=false;
 const DB_VERSION=1;
 let MEDIA_ID='unselected';
@@ -93,7 +93,7 @@ function refreshAudio(){
  lastKnownPosition=readPosition(positionKey);
  pendingPosition=lastKnownPosition>0?lastKnownPosition:null;
  audio.playbackRate=1;audio.defaultPlaybackRate=1;audio.load();$('playbackState').textContent='再生準備中';syncPlayerControls();
- if('mediaSession'in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:selectedLessonId+' / '+readableFilename(audioRecord.filename),artist:'パタプラ個人学習',album:'Patapura v1.6'});}catch(err){log('MediaSessionメタデータ不可：'+err.message);}}
+ if('mediaSession'in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:selectedLessonId+' / '+readableFilename(audioRecord.filename),artist:'パタプラ個人学習',album:'Patapura v1.7'});}catch(err){log('MediaSessionメタデータ不可：'+err.message);}}
 }
 async function showDiagnostics(){
  const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
@@ -154,7 +154,7 @@ async function checkAppUpdate(){
 $('checkAppUpdate')?.addEventListener('click',checkAppUpdate);
 function downloadBlob(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),12000);}
 async function startup(){
- log('アプリ起動：'+location.href);log('バージョン：2026-11-25 v1.6');
+ log('アプリ起動：'+location.href);log('バージョン：2026-11-25 v1.7');
  if(!('indexedDB'in window)){notice('IndexedDBに対応しない環境です');log('IDBなし：続行不可');return;}
  try{progress=(await recordGet('progress',PROGRESS_ID))||progress;audioRecord=await recordGet('audio',MEDIA_ID);renderStorage();renderProgress();refreshAudio();log('IDB復元：'+(audioRecord?'音声あり':'音声なし')+'／'+(progress.completedOn||'進捗なし'));}
  catch(err){notice('保存領域の読込に失敗しました');log('IDB読込エラー：'+err.message);}
@@ -226,7 +226,7 @@ $('resetData').addEventListener('click',async()=>{
  positionKey=null;positionReady=false;pendingPosition=null;clearSavedPositions();audioRecord=null;progress={id:PROGRESS_ID,completedOn:null,checks:{}};refreshAudio();renderStorage();renderProgress();await showDiagnostics();notice('試験データを消去しました');log('試験データ削除');document.dispatchEvent(new Event('trialreset'));}
  catch(err){log('削除失敗：'+err.message);notice('削除できませんでした');}
 });
-const seek=$('audioSeek'),playButton=$('playAudio'),pauseButton=$('pauseAudio');
+const seek=$('audioSeek'),playButton=$('playAudio');
 // Independent from completion records: small local checkpoints only.
 let positionKey=null,positionReady=false,pendingPosition=null,lastKnownPosition=0,lastSavedAt=0;
 const POSITION_PREFIX='patapura-audio-position-v1:';
@@ -274,8 +274,12 @@ function seekAudioTo(value){
 function hasAudioSource(){return Boolean(audioRecord&&audio.getAttribute('src')&&!audio.error);}
 function syncPlayerControls(){
  const available=hasAudioSource(),playing=available&&!audio.paused&&!audio.ended;
- if(playButton)playButton.disabled=!available||playing||pendingPosition!==null;
- if(pauseButton)pauseButton.disabled=!playing;
+ if(playButton){
+  playButton.disabled=!available||(!playing&&pendingPosition!==null);
+  playButton.textContent=playing?'Ⅱ 一時停止':'▶ 再生';
+  playButton.setAttribute('aria-label',playing?'一時停止':'再生');
+  playButton.classList.toggle('is-playing',playing);
+ }
  if(seek)seek.disabled=!available||!positionReady||pendingPosition!==null||!Number.isFinite(audio.duration)||audio.duration<=0;
 }
 function updateTime(reset=false){
@@ -291,8 +295,9 @@ function startAudio(){
  try{const promise=audio.play();if(promise)promise.catch(err=>{if(err.name==='AbortError')return;$('playbackState').textContent='再生できません。再度お試しください。';log('再生失敗：'+err.message);syncPlayerControls();});}
  catch(err){$('playbackState').textContent='再生できません。再度お試しください。';syncPlayerControls();}
 }
-playButton?.addEventListener('click',startAudio);
-pauseButton?.addEventListener('click',()=>audio.pause());
+playButton?.addEventListener('click',()=>{
+ if(!audio.paused&&!audio.ended)audio.pause();else startAudio();
+});
 seek?.addEventListener('input',()=>seekAudioTo(Number(seek.value)));
 audio.addEventListener('error',()=>{if(audio.error){$('playbackState').textContent='再生エラー（診断ログ参照）';log('audio.error code='+audio.error.code+' message='+audio.error.message);}syncPlayerControls();});
 audio.addEventListener('loadedmetadata',()=>{
@@ -310,6 +315,36 @@ audio.addEventListener('timeupdate',()=>{checkpointPosition();updateTime();});
 window.addEventListener('pagehide',()=>checkpointPosition(true));
 window.addEventListener('pageshow',()=>{recoverPosition();showDiagnostics();renderProgress();});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)checkpointPosition(true);else{recoverPosition();showDiagnostics();}});
+// Keep the two primary actions visible without occupying the top safe area.
+function setupStudyDock(){
+ const slot=$('studyActionSlot'),bar=$('studyActions'),study=$('studyView');
+ if(!slot||!bar||!study)return;
+ const lesson=slot.closest('section');
+ let queued=false;
+ function sync(){
+  queued=false;
+  const visible=!study.hidden&&slot.getClientRects().length>0;
+  const rect=slot.getBoundingClientRect();
+  const threshold=88;
+  const dock=visible&&rect.top<threshold&&lesson.getBoundingClientRect().bottom>0;
+  bar.classList.toggle('is-docked',dock);
+  document.body.classList.toggle('study-controls-docked',dock);
+ }
+ function schedule(){if(!queued){queued=true;requestAnimationFrame(sync);}}
+ window.addEventListener('scroll',schedule,{passive:true});
+ window.addEventListener('resize',schedule);
+ window.addEventListener('pageshow',schedule);
+ window.visualViewport?.addEventListener('resize',schedule);
+ window.visualViewport?.addEventListener('scroll',schedule);
+ document.addEventListener('patapura:selection',schedule);
+ document.addEventListener('patapura:library-ready',schedule);
+ for(const id of ['showStudy','showRecords','showSettings'])$(id)?.addEventListener('click',schedule);
+ document.addEventListener('patapura:home',schedule);
+ document.addEventListener('visibilitychange',schedule);
+ if(typeof ResizeObserver!=='undefined')new ResizeObserver(schedule).observe(lesson);
+ schedule();
+}
+document.addEventListener('DOMContentLoaded',setupStudyDock);
 const appReady=startup();
 if('mediaSession' in navigator){
  for(const [action,handler] of Object.entries({play:startAudio,pause:()=>audio.pause(),seekto:d=>seekAudioTo(d.seekTime),seekbackward:d=>seekAudioTo(audio.currentTime-(d.seekOffset||10)),seekforward:d=>seekAudioTo(audio.currentTime+(d.seekOffset||10))})){try{navigator.mediaSession.setActionHandler(action,handler);}catch(_){}}
