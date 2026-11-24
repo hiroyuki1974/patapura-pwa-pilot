@@ -13,13 +13,13 @@
 <link rel="icon" href="./icon.svg">
 <script>try{var t=localStorage.getItem("patapura-theme")||"auto";document.documentElement.dataset.theme=t==="auto"?(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t}catch(e){}</script>
 <link rel="stylesheet" href="./style_20261123.css">
-<title>今日のパタプラ｜v1.0</title>
+<title>今日のパタプラ｜v1.1</title>
 </head>
 <body>
 <main class="wrap">
 <header class="header">
  <div class="compact-heading"><h1>今日のパタプラ</h1><button id="themeBtn" class="outline" type="button" aria-label="表示モードを変更">自動</button></div>
- <div class="status-row"><span class="tag">v1.0 · 2026.11.24</span><span id="modeLabel" class="tag tag-muted">起動環境を確認中</span></div>
+ <div class="status-row"><span class="tag">v1.1 · 2026.11.24</span><span id="modeLabel" class="tag tag-muted">起動環境を確認中</span></div>
  <nav class="top-nav" aria-label="画面切替"><button type="button" id="showStudy" aria-pressed="true">学習</button><button type="button" id="showRecords" aria-pressed="false">記録一覧</button><button type="button" id="showSettings" aria-pressed="false">設定</button></nav>
 </header>
 <div id="studyView">
@@ -42,6 +42,7 @@
    <select id="unifiedLessonSelect" class="field" aria-label="レッスン"></select>
  </div>
  <div id="offlineLessonMeta" class="visually-hidden"></div>
+ <div class="round-row"><label for="lessonRound">学習周回</label><select id="lessonRound" aria-label="学習周回"><option value="1">1周目</option><option value="2">2周目</option><option value="3">3周目</option></select></div>
  <div class="lesson-player">
   <div class="audio-kind-row"><select id="audioKindSelect" aria-label="音声の種類"></select><span id="selectedAudioStatus" class="small-muted" role="status">未登録</span></div>
   <div class="player-card"><div class="player-top"><strong id="trackTitle">音声未登録</strong></div>
@@ -53,7 +54,7 @@
  
 </section>
 <section class="panel completion-panel" aria-label="学習完了">
- <div class="progress-card"><span id="todayDate" class="visually-hidden"></span><div class="progress-actions"><button id="completeNextBtn" class="solid" type="button" disabled>完了して次の教材へ</button><button id="completeBtn" class="outline" type="button">学習完了にする（記録のみ）</button></div></div>
+ <div class="progress-card"><span id="todayDate" class="visually-hidden"></span><div class="progress-actions"><button id="completeBtn" class="solid" type="button" disabled>学習完了</button><button id="completeNextBtn" class="outline" type="button">今日の学習へ戻る</button></div></div>
  <div id="completeState" class="small-muted">未完了</div>
  
 </section>
@@ -62,8 +63,9 @@
  <div class="records-header"><h2 id="recordsHeading" class="compact-title">学習記録</h2><strong id="recordsTotal"></strong></div>
  <div id="recordTabs" class="record-tabs" aria-label="記録の教材"></div>
  <p id="recordSummary" class="small-muted"></p>
- <table class="records-table"><thead><tr><th scope="col">順番</th><th scope="col">レッスン</th><th scope="col">完了日</th></tr></thead><tbody id="recordRows"></tbody></table>
- <p class="small-muted">このアプリ内の学習完了記録です。公式サイトの過去の記録は含みません。</p>
+ <p class="small-muted">日付をタップすると記録を修正できます。</p>
+ <div id="recordEdit" class="record-edit" hidden><strong id="recordEditTitle"></strong><label for="recordDate">学習日</label><input id="recordDate" type="date"><div class="record-edit-actions"><button id="recordSave" type="button" class="solid">保存</button><button id="recordClear" type="button" class="outline">記録を削除</button><button id="recordCancel" type="button" class="outline">閉じる</button></div><p id="recordEditStatus" class="small-muted" role="status"></p></div>
+ <div class="record-scroll"><table class="records-table"><thead><tr><th scope="col">レッスン</th><th scope="col">1周目</th><th scope="col">2周目</th><th scope="col">3周目</th></tr></thead><tbody id="recordRows"></tbody></table></div>
 </section>
 <div id="settingsView" hidden>
 <section class="notice" aria-label="データ保管"><strong>教材はこのiPhone内に保存されます。</strong> 本文・音声・学習記録は既存の保存領域を引き継ぎます。ホーム画面アイコンや元のMP3は削除しないでください。</section>
@@ -115,13 +117,13 @@
 </details>
 <details class="details"><summary>技術情報・トラブル診断</summary><div class="tech"><p>通常は「直接再生」を使用します。SW経由はRange応答の比較試験用です。</p><div class="segmented"><button id="blobMode" class="selected" type="button" aria-pressed="true">直接再生</button><button id="swMode" type="button" aria-pressed="false">SW経由</button></div><div class="inline-actions"><button class="outline" id="rangeCheck" type="button">Range応答を確認</button><button class="outline" id="reloadAudio" type="button">音声を再読み込み</button></div><p id="swStatus" class="small-muted"></p><p id="diagnostics"></p><p class="small-muted">サービスワーカーが使えない場合は、HTTPSで開いてください。サイト初回起動後は再読み込みするとSW経由試験が可能になります。</p><div class="inline-actions"><button id="copyLog" class="outline" type="button">診断ログをコピー</button><button id="requestPersist" class="outline" type="button">保存保護を要求</button></div><pre id="log" aria-label="診断ログ"></pre><div class="maintenance-danger"><p>データを消去すると音声・本文・学習記録を失います。通常は使用しないでください。</p><button id="resetData" type="button" class="danger-link">試験データだけを消去</button></div></div></details>
 </div>
-<footer><p>v1.0 · 端末内保存</p></footer>
+<footer><p>v1.1 · 端末内保存</p></footer>
 <div id="toast" role="status" aria-live="polite" class="toast" hidden></div>
 </main>
 <script src="./core_20261123.js" defer></script>
+<script src="./daily_core_20261123.js" defer></script>
 <script src="./app_20261123.js" defer></script>
 <script src="./library_20261123.js" defer></script>
-<script src="./daily_core_20261123.js" defer></script>
 <script src="./daily_20261123.js" defer></script>
 <script src="./bulk_folder_core_20261123.js" defer></script>
 <script src="./bulk_folder_20261123.js" defer></script>
