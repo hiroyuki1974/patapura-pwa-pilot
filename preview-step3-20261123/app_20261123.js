@@ -1,5 +1,8 @@
+/* build:v12r2-20261124 */
 'use strict';
 const DB_NAME='patapura-pwa-step3-trial-v1';
+const APP_BUILD='v12r2-20261124';
+let swRegistration=null,checkingAppUpdate=false;
 const DB_VERSION=1;
 let MEDIA_ID='unselected';
 let selectedLessonId='';
@@ -106,12 +109,40 @@ async function setupServiceWorker(){
    await showDiagnostics();return;
  }
  navigator.serviceWorker.addEventListener('controllerchange',()=>{log('Service Worker controllerchange');showDiagnostics().then(()=>{if(playMode==='sw')refreshAudio();});});
- try{const reg=await navigator.serviceWorker.register('./sw.js',{scope:'./'});
- log('Service Worker登録：'+reg.scope);
+ try{const reg=await navigator.serviceWorker.register('./sw.js',{scope:'./',updateViaCache:'none'});
+ swRegistration=reg;log('Service Worker登録：'+reg.scope);
  await navigator.serviceWorker.ready;
  await showDiagnostics();}
  catch(err){log('SW登録エラー：'+err.message);$('swStatus').textContent='SW登録エラー：'+err.message;}
 }
+async function checkAppUpdate(){
+ const button=$('checkAppUpdate'),status=$('appUpdateStatus');
+ if(!button||!status||checkingAppUpdate)return;
+ if(navigator.onLine===false){status.textContent='オンラインで更新を確認してください。';return;}
+ if(!audio.paused&&!audio.ended){status.textContent='音声を停止してから更新してください。';return;}
+ if($('bulkCancelBtn')&&!$('bulkCancelBtn').disabled||$('cancelAudioImport')&&!$('cancelAudioImport').disabled){status.textContent='取り込み完了後に更新してください。';return;}
+ checkingAppUpdate=true;button.disabled=true;status.textContent='最新版を確認中…';
+ try{
+  if(!navigator.serviceWorker)throw Error('更新機能は利用できません');
+  const reg=swRegistration||await navigator.serviceWorker.getRegistration();
+  if(!reg)throw Error('アプリをオンラインで開き直してください');
+  let worker=reg.installing||reg.waiting;
+  await reg.update();
+  worker=reg.installing||reg.waiting||worker;
+  if(worker&&worker.state!=='activated'){
+   await new Promise((resolve,reject)=>{
+    let timer;const done=()=>{clearTimeout(timer);worker.removeEventListener('statechange',change);resolve();};
+    const change=()=>{if(worker.state==='activated')done();else if(worker.state==='redundant'){clearTimeout(timer);worker.removeEventListener('statechange',change);reject(Error('更新の準備ができませんでした'));}};
+    timer=setTimeout(()=>{worker.removeEventListener('statechange',change);reject(Error('更新準備中です。再度確認してください'));},25000);
+    worker.addEventListener('statechange',change);change();
+   });
+  }
+  status.textContent='確認完了。画面を再読み込みします。';
+  location.reload();
+ }catch(err){status.textContent='更新確認：'+err.message;log('更新確認失敗：'+err.message);}
+ finally{checkingAppUpdate=false;button.disabled=false;}
+}
+$('checkAppUpdate')?.addEventListener('click',checkAppUpdate);
 function downloadBlob(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),12000);}
 async function startup(){
  log('アプリ起動：'+location.href);log('バージョン：2026-11-24 v1.2');
