@@ -1,14 +1,14 @@
 /* Patapura PWA audio pilot, 2026-11-23. Only shell assets are cached; audio never leaves IndexedDB. */
 'use strict';
-const VERSION='patapura-step3-trial-shell-v13-20261124';
-const BUILD='v13-20261124';
-const SHELL=['./','./index.html','./style_20261123.css','./app_20261123.js','./library_20261123.js','./core_20261123.js','./daily_core_20261123.js','./daily_20261123.js','./bulk_folder_core_20261123.js','./bulk_folder_20261123.js','./manifest.webmanifest','./icon.svg'];
+const VERSION='patapura-step3-trial-shell-v14push-20261124';
+const BUILD='v14push-20261124';
+const SHELL=['./','./index.html','./style_20261123.css','./app_20261123.js','./library_20261123.js','./core_20261123.js','./daily_core_20261123.js','./daily_20261123.js','./push_20261124.js','./bulk_folder_core_20261123.js','./bulk_folder_20261123.js','./manifest.webmanifest','./icon.svg'];
 const DB='patapura-pwa-step3-trial-v1';
 // Download an entire matching release before activating. Never reuse the HTTP cache.
 const versioned=path=>{const url=new URL(path,self.registration.scope);url.searchParams.set('build',BUILD);return url;};
 async function installRelease(){
  const cache=await caches.open(VERSION);
- const markers={'./index.html':'name="patapura-build" content="'+BUILD+'"','./app_20261123.js':'/* build:'+BUILD+' */','./daily_20261123.js':'/* build:'+BUILD+' */','./daily_core_20261123.js':'/* build:'+BUILD+' */','./library_20261123.js':'/* build:'+BUILD+' */','./style_20261123.css':'/* build:'+BUILD+' */'};
+ const markers={'./index.html':'name="patapura-build" content="'+BUILD+'"','./app_20261123.js':'/* build:'+BUILD+' */','./daily_20261123.js':'/* build:'+BUILD+' */','./daily_core_20261123.js':'/* build:'+BUILD+' */','./library_20261123.js':'/* build:'+BUILD+' */','./style_20261123.css':'/* build:'+BUILD+' */','./push_20261124.js':'/* build:'+BUILD+' */'};
  try{
   for(const path of SHELL.filter(p=>p!=='./')){
    const response=await fetch(versioned(path),{cache:'reload'});
@@ -116,3 +116,25 @@ self.addEventListener('fetch',event=>{
   }
 });
 
+
+// Classic Web Push fallback. Modern iOS handles immutable declarative payloads itself.
+self.addEventListener('push',event=>{
+ let data;try{data=event.data?.json();}catch(_){}
+ const n=data?.notification||{};
+ event.waitUntil((async()=>{
+  await self.registration.showNotification(n.title||'今日のパタプラ',{body:n.body||'今日の3レッスンを学習しましょう。',tag:'patapura-daily',data:{open:true}});
+  if(self.navigator?.setAppBadge)try{await self.navigator.setAppBadge(1);}catch(_){}
+ })());
+});
+self.addEventListener('notificationclick',event=>{
+ if(event.notification.tag!=='patapura-daily')return;
+ event.notification.close();
+ event.waitUntil((async()=>{
+  const target=new URL('./',self.registration.scope);
+  const windows=await self.clients.matchAll({type:'window',includeUncontrolled:true});
+  for(const client of windows){const u=new URL(client.url);if(u.origin===target.origin&&u.pathname.startsWith(target.pathname)){
+   try{await client.focus();client.postMessage({type:'patapura:notification'});return;}catch(_){}
+  }}
+  await self.clients.openWindow(target.href);
+ })());
+});
