@@ -2,7 +2,7 @@ name: Patapura daily push
 on:
   workflow_dispatch:
   schedule:
-    - cron: '30 21 * * *'
+    - cron: '0 20 * * *'
 permissions:
   contents: read
 concurrency:
