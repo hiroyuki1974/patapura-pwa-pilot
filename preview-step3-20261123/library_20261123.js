@@ -47,20 +47,29 @@ async function selectAudio(persist=true){
  const token=++selectionToken,lesson=currentLesson(),kind=$('audioKindSelect').value;
  audioRecord=null;refreshAudio();renderStorage();
  MEDIA_ID=lesson?C.audioId(lesson.track,lesson.number,kind):'unselected';
- $('selectedAudioStatus').textContent=lesson?'音声を確認中…':'本文JSONを先に取り込んでください';
+ const status=$('selectedAudioStatus'),row=status.closest('.audio-kind-row');
+ status.hidden=false;if(row)row.hidden=false;
+ status.textContent=lesson?'音声を確認中…':'本文JSONを先に取り込んでください';
  if(!lesson)return;
  const id=MEDIA_ID;
  try{
   const record=await recordGet('audio',id);
   if(token!==selectionToken)return;
   audioRecord=record;renderStorage();refreshAudio();
-  $('selectedAudioStatus').textContent=record?`${C.label(kind)}：登録済み（${(record.size/1024/1024).toFixed(1)} MB）`:`${C.label(kind)}：未登録`;
-  if(persist){progress.selection={track:lesson.track,id:lesson.id,kind};await saveProgress();}
+  status.textContent=record?'':`${C.label(kind)}：未登録`;
+  status.hidden=Boolean(record);
+  if(row)row.hidden=Boolean(record)&&lesson.track!=='colloquial';
+  if(persist){progress.selection={track:lesson.track,id:lesson.id,kind,round:selectedRound};await saveProgress();}
  }catch(err){if(token===selectionToken){$('selectedAudioStatus').textContent='音声読込失敗：'+err.message;log('音声読込失敗：'+err.message);}}
 }
 function refreshAudioKinds(preferred){
  const lesson=currentLesson(),select=$('audioKindSelect');select.replaceChildren();
- if(lesson){for(const a of C.candidates(lesson.track,lesson.number))option(select,a.kind,`${a.label}・${audioKeys.has(a.key)?'登録済み':'未登録'}`);const preferredKind=C.kinds(lesson.track).includes(preferred)?preferred:(lesson.track==='colloquial'?'type_b':'review');select.value=preferredKind;}
+ select.hidden=!lesson||lesson.track!=='colloquial';
+ if(lesson){
+  const allowed=lesson.track==='colloquial'?['type_b','type_c']:['review'];
+  for(const a of C.candidates(lesson.track,lesson.number).filter(a=>allowed.includes(a.kind)))option(select,a.kind,a.label+(audioKeys.has(a.key)?'':'・未登録'));
+  select.value=allowed.includes(preferred)?preferred:allowed[0];
+ }
 }
 async function showLesson(persist=true,preferred){
  const lesson=currentLesson();selectedLessonId=lesson?.id||'';
@@ -77,11 +86,12 @@ async function refreshCourses(selection=progress.selection,persist=true){
  const select=$('offlineCourseSelect');select.replaceChildren();
  for(const t of C.ORDER)if(library)option(select,t,C.NAMES[t]);
  if(C.ORDER.includes(selection?.track))select.value=selection.track;
+ selectedRound=selection?.round?PatapuraDailyCore.normalizeRound(selection.round):PatapuraDailyCore.roundForLesson(progress,selection?.id,localDate());
  await refreshLessons(selection?.id,persist,selection?.kind);
 }
 function setBusy(value){
  busy=value;
- for(const id of ['offlineJsonFiles','audioFile','audioImportCourse','offlineCourseSelect','offlineLessonSelect','audioKindSelect','resetData','backupFile','programSelect','unifiedLessonSelect'])if($(id))$(id).disabled=value;
+ for(const id of ['offlineJsonFiles','audioFile','audioImportCourse','offlineCourseSelect','offlineLessonSelect','audioKindSelect','resetData','backupFile','programSelect','unifiedLessonSelect','lessonRound'])if($(id))$(id).disabled=value;
  $('cancelAudioImport').disabled=!value;
 }
 function batchStatus(r){
@@ -123,7 +133,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
  document.addEventListener('patapura:navigate',e=>{
   const choice=e.detail||{};
   if(!library||!C.ORDER.includes(choice.track))return;
-  refreshCourses({track:choice.track,id:choice.id,kind:choice.kind||(choice.track==='colloquial'?'type_b':'review')},true).catch(err=>report(err.message,true));
+  refreshCourses({track:choice.track,id:choice.id,kind:choice.kind||(choice.track==='colloquial'?'type_b':'review'),round:choice.round},true).catch(err=>report(err.message,true));
  });
  document.addEventListener('progressrestored',()=>refreshCourses().catch(e=>report(e.message,true)));
  document.addEventListener('trialreset',()=>{library=null;audioKeys.clear();renderSummary();refreshCourses(undefined,false);});
