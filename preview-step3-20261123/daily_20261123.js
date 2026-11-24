@@ -41,6 +41,17 @@ function renderRecords(){
 }
 function setupTheme(){const modes=['auto','light','dark'],labels={auto:'自動',light:'ライト',dark:'ダーク'};let mode='auto';try{const v=localStorage.getItem('patapura-theme');if(modes.includes(v))mode=v;}catch(_){}const mq=matchMedia('(prefers-color-scheme: dark)');const apply=()=>{document.documentElement.dataset.theme=mode==='auto'?(mq.matches?'dark':'light'):mode;$('themeBtn').textContent=labels[mode];$('themeBtn').setAttribute('aria-label','表示モード：'+labels[mode]+'。押すと切り替え');};$('themeBtn').addEventListener('click',()=>{mode=modes[(modes.indexOf(mode)+1)%modes.length];try{localStorage.setItem('patapura-theme',mode);}catch(_){}apply();});mq.addEventListener?.('change',apply);apply();}
 
+function setupFontSize(){
+ const levels=[80,90,100,110,120,130,140,150];
+ let size=100;
+ try{const stored=Number(localStorage.getItem('patapura-font-percent'));if(levels.includes(stored))size=stored;}catch(_){}
+ const apply=()=>{document.documentElement.style.setProperty('--study-font-scale',String(size/100));$('fontPercent').textContent=size+'%';$('fontMinus').disabled=size===levels[0];$('fontPlus').disabled=size===levels.at(-1);};
+ const set=(next)=>{size=next;try{localStorage.setItem('patapura-font-percent',String(size));}catch(_){}apply();};
+ $('fontMinus').addEventListener('click',()=>set(levels[Math.max(0,levels.indexOf(size)-1)]));
+ $('fontPlus').addEventListener('click',()=>set(levels[Math.min(levels.length-1,levels.indexOf(size)+1)]));
+ $('fontReset').addEventListener('click',()=>set(100));
+ apply();
+}
 async function ensureDaily(){
  if(!progress.lessons)progress.lessons={};
  const selected=D.plan(progress,localDate());
@@ -97,7 +108,7 @@ function render(){
  syncProgram();
 }
 document.addEventListener('DOMContentLoaded',async()=>{
- setupTheme();
+ setupTheme();setupFontSize();
  $('showStudy').addEventListener('click',()=>showView('Study'));
  $('showRecords').addEventListener('click',()=>showView('Records'));
  $('showSettings').addEventListener('click',()=>showView('Settings'));
