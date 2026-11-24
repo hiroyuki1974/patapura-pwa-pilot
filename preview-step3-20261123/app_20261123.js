@@ -43,8 +43,9 @@ function renderProgress(){
  const completed=PatapuraDailyCore.readDate(progress,selectedLessonId,selectedRound);
  $('lessonRound').value=String(selectedRound);
  $('lessonRound').disabled=!selectedLessonId||completing;
- $('completeBtn').disabled=!selectedLessonId||Boolean(completed)||completing;
- $('completeBtn').textContent=completed?'完了済み':'学習完了';
+ $('completeBtn').disabled=!selectedLessonId||completing;
+ $('completeBtn').textContent=completed?'完了取消':'学習完了';
+ $('completeBtn').setAttribute('aria-label',completed?'選択中の周回の学習完了を取り消す':'選択中の周回の学習完了を記録する');
  $('completeBtn').classList.toggle('done',Boolean(completed));
  $('completeNextBtn').textContent='今日の学習へ戻る';
  $('completeState').textContent=selectedRound+'周目：'+(completed?'完了 '+completed:'未完了');
@@ -80,7 +81,7 @@ function refreshAudio(){
    objectURL=URL.createObjectURL(audioRecord.blob);audio.src=objectURL;log('音声ソース：IndexedDB Blob URL');
  }
  audio.load();$('playbackState').textContent='再生準備中';
- if('mediaSession'in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:selectedLessonId+' / '+readableFilename(audioRecord.filename),artist:'パタプラ個人学習',album:'Patapura v1.1'});}catch(err){log('MediaSessionメタデータ不可：'+err.message);}}
+ if('mediaSession'in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:selectedLessonId+' / '+readableFilename(audioRecord.filename),artist:'パタプラ個人学習',album:'Patapura v1.2'});}catch(err){log('MediaSessionメタデータ不可：'+err.message);}}
 }
 async function showDiagnostics(){
  const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
@@ -113,7 +114,7 @@ async function setupServiceWorker(){
 }
 function downloadBlob(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),12000);}
 async function startup(){
- log('アプリ起動：'+location.href);log('バージョン：2026-11-24 v1.1');
+ log('アプリ起動：'+location.href);log('バージョン：2026-11-24 v1.2');
  if(!('indexedDB'in window)){notice('IndexedDBに対応しない環境です');log('IDBなし：続行不可');return;}
  try{progress=(await recordGet('progress',PROGRESS_ID))||progress;audioRecord=await recordGet('audio',MEDIA_ID);renderStorage();renderProgress();refreshAudio();log('IDB復元：'+(audioRecord?'音声あり':'音声なし')+'／'+(progress.completedOn||'進捗なし'));}
  catch(err){notice('保存領域の読込に失敗しました');log('IDB読込エラー：'+err.message);}
@@ -134,11 +135,17 @@ $('rangeCheck').addEventListener('click',async()=>{
 $('completeBtn').addEventListener('click',async()=>{
  if(!selectedLessonId||completing)return;
  const D=PatapuraDailyCore,id=selectedLessonId,r=selectedRound;
- if(D.readDate(progress,id,r))return;
- const previous=progress.completedOn;
+ const oldDate=D.readDate(progress,id,r),previous=progress.completedOn;
+ if(oldDate&&!confirm(r+'周目の学習完了（'+oldDate+'）を取り消しますか？'))return;
  completing=true;renderProgress();
- try{const date=localDate();D.setDate(progress,id,r,date);progress.completedOn=date;await saveProgress();notice(r+'周目の学習完了を記録しました');}
- catch(err){D.setDate(progress,id,r,null);progress.completedOn=previous;notice('学習記録の保存に失敗しました');log('進捗保存失敗：'+err.message);}
+ try{
+  const date=oldDate?null:localDate();
+  D.setDate(progress,id,r,date);
+  if(date)progress.completedOn=date;
+  else if(previous===oldDate){const dates=D.PROGRAMS.flatMap(p=>p.sequence.flatMap(lessonId=>Array.from({length:D.MAX_ROUNDS},(_,i)=>D.readDate(progress,lessonId,i+1)))).filter(Boolean).sort();progress.completedOn=dates.at(-1)||null;}
+  await saveProgress();
+  notice(oldDate?r+'周目の学習完了を取り消しました':r+'周目の学習完了を記録しました');
+ }catch(err){D.setDate(progress,id,r,oldDate);progress.completedOn=previous;notice('学習記録の保存に失敗しました');log('進捗保存失敗：'+err.message);}
  finally{completing=false;renderProgress();}
 });
 $('completeNextBtn').addEventListener('click',()=>{
