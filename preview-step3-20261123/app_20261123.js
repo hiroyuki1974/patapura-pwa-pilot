@@ -1,7 +1,7 @@
-/* build:v14push-20261124 */
+/* build:v14push0500-20261124 */
 'use strict';
 const DB_NAME='patapura-pwa-step3-trial-v1';
-const APP_BUILD='v14push-20261124';
+const APP_BUILD='v14push0500-20261124';
 let swRegistration=null,checkingAppUpdate=false;
 const DB_VERSION=1;
 let MEDIA_ID='unselected';
