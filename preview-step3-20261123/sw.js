@@ -1,14 +1,14 @@
 /* Patapura PWA audio pilot, 2026-11-23. Only shell assets are cached; audio never leaves IndexedDB. */
 'use strict';
-const VERSION='patapura-step3-trial-shell-v12r2-20261124';
-const BUILD='v12r2-20261124';
+const VERSION='patapura-step3-trial-shell-v13-20261124';
+const BUILD='v13-20261124';
 const SHELL=['./','./index.html','./style_20261123.css','./app_20261123.js','./library_20261123.js','./core_20261123.js','./daily_core_20261123.js','./daily_20261123.js','./bulk_folder_core_20261123.js','./bulk_folder_20261123.js','./manifest.webmanifest','./icon.svg'];
 const DB='patapura-pwa-step3-trial-v1';
 // Download an entire matching release before activating. Never reuse the HTTP cache.
 const versioned=path=>{const url=new URL(path,self.registration.scope);url.searchParams.set('build',BUILD);return url;};
 async function installRelease(){
  const cache=await caches.open(VERSION);
- const markers={'./index.html':'name="patapura-build" content="'+BUILD+'"','./app_20261123.js':'/* build:'+BUILD+' */','./daily_20261123.js':'/* build:'+BUILD+' */','./style_20261123.css':'/* build:'+BUILD+' */'};
+ const markers={'./index.html':'name="patapura-build" content="'+BUILD+'"','./app_20261123.js':'/* build:'+BUILD+' */','./daily_20261123.js':'/* build:'+BUILD+' */','./daily_core_20261123.js':'/* build:'+BUILD+' */','./library_20261123.js':'/* build:'+BUILD+' */','./style_20261123.css':'/* build:'+BUILD+' */'};
  try{
   for(const path of SHELL.filter(p=>p!=='./')){
    const response=await fetch(versioned(path),{cache:'reload'});
