@@ -49,15 +49,16 @@
    <audio id="audioPlayer" controls preload="metadata" playsinline aria-label="レッスン音声プレーヤー"></audio>
    <div class="audio-info"><span id="audioTime">0:00 / 0:00</span><span id="playbackState">音声を選択してください</span></div>
   </div>
+ <div class="completion-panel" aria-label="学習完了">
+ <div class="progress-card"><span id="todayDate" class="visually-hidden"></span><div class="progress-actions"><button id="completeBtn" class="solid" type="button" disabled>学習完了</button><button id="completeNextBtn" class="outline" type="button">今日の学習へ戻る</button></div></div>
+ <div id="completeState" class="small-muted">未完了</div>
+ 
+</div>
  </div>
  <details class="lesson-text-details" open><summary>本文・和訳・解説</summary><div id="offlineLessonBody" class="study-reader"></div></details>
  
 </section>
-<section class="panel completion-panel" aria-label="学習完了">
- <div class="progress-card"><span id="todayDate" class="visually-hidden"></span><div class="progress-actions"><button id="completeBtn" class="solid" type="button" disabled>学習完了</button><button id="completeNextBtn" class="outline" type="button">今日の学習へ戻る</button></div></div>
- <div id="completeState" class="small-muted">未完了</div>
- 
-</section>
+
 </div>
 <section id="recordsView" class="panel" hidden aria-labelledby="recordsHeading">
  <div class="records-header"><h2 id="recordsHeading" class="compact-title">学習記録</h2><strong id="recordsTotal"></strong></div>
