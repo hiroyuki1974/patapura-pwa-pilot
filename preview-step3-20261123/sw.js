@@ -1,11 +1,28 @@
 /* Patapura PWA audio pilot, 2026-11-23. Only shell assets are cached; audio never leaves IndexedDB. */
 'use strict';
-const VERSION='patapura-step3-trial-shell-v12-20261124';
+const VERSION='patapura-step3-trial-shell-v12r2-20261124';
+const BUILD='v12r2-20261124';
 const SHELL=['./','./index.html','./style_20261123.css','./app_20261123.js','./library_20261123.js','./core_20261123.js','./daily_core_20261123.js','./daily_20261123.js','./bulk_folder_core_20261123.js','./bulk_folder_20261123.js','./manifest.webmanifest','./icon.svg'];
 const DB='patapura-pwa-step3-trial-v1';
-self.addEventListener('install', event=>{
-  event.waitUntil(caches.open(VERSION).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting()));
-});
+// Download an entire matching release before activating. Never reuse the HTTP cache.
+const versioned=path=>{const url=new URL(path,self.registration.scope);url.searchParams.set('build',BUILD);return url;};
+async function installRelease(){
+ const cache=await caches.open(VERSION);
+ const markers={'./index.html':'name="patapura-build" content="'+BUILD+'"','./app_20261123.js':'/* build:'+BUILD+' */','./daily_20261123.js':'/* build:'+BUILD+' */','./style_20261123.css':'/* build:'+BUILD+' */'};
+ try{
+  for(const path of SHELL.filter(p=>p!=='./')){
+   const response=await fetch(versioned(path),{cache:'reload'});
+   if(!response.ok)throw Error('Release download failed: '+path);
+   if(markers[path]&&!(await response.clone().text()).includes(markers[path]))throw Error('Release mismatch: '+path);
+   await cache.put(new URL(path,self.registration.scope).href,response);
+  }
+  const html=await cache.match(new URL('./index.html',self.registration.scope).href);
+  if(!html)throw Error('Release HTML missing');
+  await cache.put(new URL('./',self.registration.scope).href,html);
+ }catch(err){await caches.delete(VERSION);throw err;}
+ await self.skipWaiting();
+}
+self.addEventListener('install',event=>{event.waitUntil(installRelease());});
 self.addEventListener('activate', event=>{
   event.waitUntil((async()=>{
     const keys=await caches.keys();
@@ -86,6 +103,7 @@ self.addEventListener('fetch',event=>{
   }
   const allowed=new Set(SHELL.map(u=>new URL(u,self.registration.scope).pathname));
   if(allowed.has(url.pathname)){
+    if(url.searchParams.has('build')&&url.searchParams.get('build')!==BUILD){event.respondWith(fetch(event.request,{cache:'reload'}));return;}
     event.respondWith((async()=>{
       const cached=await (await caches.open(VERSION)).match(event.request,{ignoreSearch:true});
       if(cached)return cached;
