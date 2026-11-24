@@ -1,7 +1,7 @@
-/* build:v12r2-20261124 */
+/* build:v13-20261124 */
 'use strict';
 const DB_NAME='patapura-pwa-step3-trial-v1';
-const APP_BUILD='v12r2-20261124';
+const APP_BUILD='v13-20261124';
 let swRegistration=null,checkingAppUpdate=false;
 const DB_VERSION=1;
 let MEDIA_ID='unselected';
@@ -44,16 +44,18 @@ async function saveProgress(){await recordPut('progress',progress);renderProgres
 function renderProgress(){
  $('todayDate').textContent='日本時間：'+localDate();
  const completed=PatapuraDailyCore.readDate(progress,selectedLessonId,selectedRound);
- $('lessonRound').value=String(selectedRound);
- $('lessonRound').disabled=!selectedLessonId||completing;
  $('completeBtn').disabled=!selectedLessonId||completing;
  $('completeBtn').textContent=completed?'完了取消':'学習完了';
  $('completeBtn').setAttribute('aria-label',completed?'選択中の周回の学習完了を取り消す':'選択中の周回の学習完了を記録する');
  $('completeBtn').classList.toggle('done',Boolean(completed));
  $('completeNextBtn').textContent='今日の学習へ戻る';
- $('completeState').textContent=selectedRound+'周目：'+(completed?'完了 '+completed:'未完了');
+ $('completeState').textContent=completed?'完了 '+completed:'未完了';
  CASES.forEach(key=>{const input=document.querySelector(`[data-check="${key}"]`);if(input)input.checked=!!progress.checks[key];});
  $('checkedCount').textContent=CASES.filter(k=>progress.checks[k]).length+' / 6';
+}
+function preferredColloquialKind(){
+ try{const saved=localStorage.getItem('patapura-colloquial-kind');if(saved==='type_b'||saved==='type_c')return saved;}catch(_){}
+ return progress?.selection?.track==='colloquial'&&progress.selection.kind==='type_c'?'type_c':'type_b';
 }
 function readableFilename(name){
  // Downloads may arrive with a percent-encoded filename. Decode for display only.
@@ -84,7 +86,7 @@ function refreshAudio(){
    objectURL=URL.createObjectURL(audioRecord.blob);audio.src=objectURL;log('音声ソース：IndexedDB Blob URL');
  }
  audio.load();$('playbackState').textContent='再生準備中';
- if('mediaSession'in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:selectedLessonId+' / '+readableFilename(audioRecord.filename),artist:'パタプラ個人学習',album:'Patapura v1.2'});}catch(err){log('MediaSessionメタデータ不可：'+err.message);}}
+ if('mediaSession'in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:selectedLessonId+' / '+readableFilename(audioRecord.filename),artist:'パタプラ個人学習',album:'Patapura v1.3'});}catch(err){log('MediaSessionメタデータ不可：'+err.message);}}
 }
 async function showDiagnostics(){
  const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
@@ -145,7 +147,7 @@ async function checkAppUpdate(){
 $('checkAppUpdate')?.addEventListener('click',checkAppUpdate);
 function downloadBlob(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),12000);}
 async function startup(){
- log('アプリ起動：'+location.href);log('バージョン：2026-11-24 v1.2');
+ log('アプリ起動：'+location.href);log('バージョン：2026-11-24 v1.3');
  if(!('indexedDB'in window)){notice('IndexedDBに対応しない環境です');log('IDBなし：続行不可');return;}
  try{progress=(await recordGet('progress',PROGRESS_ID))||progress;audioRecord=await recordGet('audio',MEDIA_ID);renderStorage();renderProgress();refreshAudio();log('IDB復元：'+(audioRecord?'音声あり':'音声なし')+'／'+(progress.completedOn||'進捗なし'));}
  catch(err){notice('保存領域の読込に失敗しました');log('IDB読込エラー：'+err.message);}
@@ -181,13 +183,6 @@ $('completeBtn').addEventListener('click',async()=>{
 });
 $('completeNextBtn').addEventListener('click',()=>{
  document.dispatchEvent(new Event('patapura:home'));
-});
-$('lessonRound').addEventListener('change',async()=>{
- if(!selectedLessonId)return;
- selectedRound=PatapuraDailyCore.normalizeRound($('lessonRound').value);
- progress.selection={...(progress.selection||{}),track:selectedLessonId.split(':')[0],id:selectedLessonId,kind:$('audioKindSelect').value,round:selectedRound};
- renderProgress();
- try{await saveProgress();}catch(err){log('周回選択保存失敗：'+err.message);}
 });
 $('checkList').addEventListener('change',async e=>{
  const key=e.target?.dataset?.check;if(!CASES.includes(key))return;
