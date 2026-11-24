@@ -1,7 +1,7 @@
-/* build:v15player-20261125 */
+/* build:v16resume-20261125 */
 'use strict';
 const DB_NAME='patapura-pwa-step3-trial-v1';
-const APP_BUILD='v15player-20261125';
+const APP_BUILD='v16resume-20261125';
 let swRegistration=null,checkingAppUpdate=false;
 const DB_VERSION=1;
 let MEDIA_ID='unselected';
@@ -76,6 +76,9 @@ function chooseMode(mode){
  refreshAudio();
 }
 function refreshAudio(){
+ // Capture the OLD track with its own key before replacing the source.
+ checkpointPosition(true);
+ positionKey=null;positionReady=false;pendingPosition=null;lastKnownPosition=0;lastSavedAt=0;
  audio.pause();audio.removeAttribute('src');audio.load();
  if(objectURL){URL.revokeObjectURL(objectURL);objectURL=null;}
  updateTime(true);syncPlayerControls();
@@ -86,8 +89,11 @@ function refreshAudio(){
  }else{
    objectURL=URL.createObjectURL(audioRecord.blob);audio.src=objectURL;log('音声ソース：IndexedDB Blob URL');
  }
+ positionKey=MEDIA_ID!=='unselected'?'patapura-audio-position-v1:'+MEDIA_ID+':r'+selectedRound:null;
+ lastKnownPosition=readPosition(positionKey);
+ pendingPosition=lastKnownPosition>0?lastKnownPosition:null;
  audio.playbackRate=1;audio.defaultPlaybackRate=1;audio.load();$('playbackState').textContent='再生準備中';syncPlayerControls();
- if('mediaSession'in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:selectedLessonId+' / '+readableFilename(audioRecord.filename),artist:'パタプラ個人学習',album:'Patapura v1.5'});}catch(err){log('MediaSessionメタデータ不可：'+err.message);}}
+ if('mediaSession'in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:selectedLessonId+' / '+readableFilename(audioRecord.filename),artist:'パタプラ個人学習',album:'Patapura v1.6'});}catch(err){log('MediaSessionメタデータ不可：'+err.message);}}
 }
 async function showDiagnostics(){
  const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
@@ -141,14 +147,14 @@ async function checkAppUpdate(){
    });
   }
   status.textContent='確認完了。画面を再読み込みします。';
-  location.reload();
+  checkpointPosition(true);location.reload();
  }catch(err){status.textContent='更新確認：'+err.message;log('更新確認失敗：'+err.message);}
  finally{checkingAppUpdate=false;button.disabled=false;}
 }
 $('checkAppUpdate')?.addEventListener('click',checkAppUpdate);
 function downloadBlob(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),12000);}
 async function startup(){
- log('アプリ起動：'+location.href);log('バージョン：2026-11-25 v1.5');
+ log('アプリ起動：'+location.href);log('バージョン：2026-11-25 v1.6');
  if(!('indexedDB'in window)){notice('IndexedDBに対応しない環境です');log('IDBなし：続行不可');return;}
  try{progress=(await recordGet('progress',PROGRESS_ID))||progress;audioRecord=await recordGet('audio',MEDIA_ID);renderStorage();renderProgress();refreshAudio();log('IDB復元：'+(audioRecord?'音声あり':'音声なし')+'／'+(progress.completedOn||'進捗なし'));}
  catch(err){notice('保存領域の読込に失敗しました');log('IDB読込エラー：'+err.message);}
@@ -217,16 +223,60 @@ $('copyLog').addEventListener('click',async()=>{
 $('resetData').addEventListener('click',async()=>{
  if(!confirm('この試験版で取り込んだ音声と試験用の進捗を消去します。元のMP3ファイルは消しません。よろしいですか？'))return;
  try{const db=await openDB();try{await new Promise((resolve,reject)=>{const tx=db.transaction(['audio','progress'],'readwrite');tx.objectStore('audio').clear();tx.objectStore('progress').clear();tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);tx.onerror=()=>reject(tx.error);});}finally{db.close();}
- audioRecord=null;progress={id:PROGRESS_ID,completedOn:null,checks:{}};refreshAudio();renderStorage();renderProgress();await showDiagnostics();notice('試験データを消去しました');log('試験データ削除');document.dispatchEvent(new Event('trialreset'));}
+ positionKey=null;positionReady=false;pendingPosition=null;clearSavedPositions();audioRecord=null;progress={id:PROGRESS_ID,completedOn:null,checks:{}};refreshAudio();renderStorage();renderProgress();await showDiagnostics();notice('試験データを消去しました');log('試験データ削除');document.dispatchEvent(new Event('trialreset'));}
  catch(err){log('削除失敗：'+err.message);notice('削除できませんでした');}
 });
 const seek=$('audioSeek'),playButton=$('playAudio'),pauseButton=$('pauseAudio');
+// Independent from completion records: small local checkpoints only.
+let positionKey=null,positionReady=false,pendingPosition=null,lastKnownPosition=0,lastSavedAt=0;
+const POSITION_PREFIX='patapura-audio-position-v1:';
+function readPosition(key){
+ if(!key)return 0;
+ try{const n=Number(localStorage.getItem(key));return Number.isFinite(n)&&n>0?n:0;}catch(_){return 0;}
+}
+function writePosition(value){
+ if(!positionKey)return;
+ lastKnownPosition=value;lastSavedAt=Date.now();
+ try{if(value>0)localStorage.setItem(positionKey,String(value));else localStorage.removeItem(positionKey);}catch(_){}
+}
+function clearSavedPositions(){
+ try{for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i);if(k?.startsWith(POSITION_PREFIX))localStorage.removeItem(k);}}catch(_){}
+}
+function checkpointPosition(force=false,explicit=false){
+ if(!positionKey||!positionReady||pendingPosition!==null||audio.readyState<1||audio.ended)return;
+ const t=audio.currentTime;if(!Number.isFinite(t)||t<0)return;
+ // Ignore a transient zero when iOS unloads or resets its media pipeline.
+ // An intentional seek to zero is handled separately.
+ if(!explicit&&t<0.5&&lastKnownPosition>=1)return;
+ lastKnownPosition=t;
+ if(force||Date.now()-lastSavedAt>=1000)writePosition(t);
+}
+function restorePosition(){
+ if(!positionKey||!positionReady||pendingPosition===null||audio.readyState<1||!Number.isFinite(audio.duration)||audio.duration<=0)return;
+ const target=pendingPosition>=audio.duration?0:Math.max(0,pendingPosition);
+ try{
+  audio.currentTime=target;
+  if(Math.abs(audio.currentTime-target)>0.5)return;
+  pendingPosition=null;lastKnownPosition=target;writePosition(target);
+ }catch(_){/* Safari may need to wait for canplay before seeking. */}
+}
+function recoverPosition(){
+ if(!positionKey)return;
+ if(!positionReady||audio.readyState<1)return;
+ if(pendingPosition===null&&!audio.ended&&audio.currentTime<0.5&&lastKnownPosition>=1)pendingPosition=lastKnownPosition;
+ restorePosition();updateTime();
+}
+function seekAudioTo(value){
+ if(!hasAudioSource()||audio.readyState<1||!Number.isFinite(audio.duration)||audio.duration<=0||!Number.isFinite(value))return;
+ const target=Math.min(audio.duration,Math.max(0,value));
+ try{audio.currentTime=target;pendingPosition=null;writePosition(target===audio.duration?0:target);updateTime();}catch(_){}
+}
 function hasAudioSource(){return Boolean(audioRecord&&audio.getAttribute('src')&&!audio.error);}
 function syncPlayerControls(){
  const available=hasAudioSource(),playing=available&&!audio.paused&&!audio.ended;
- if(playButton)playButton.disabled=!available||playing;
+ if(playButton)playButton.disabled=!available||playing||pendingPosition!==null;
  if(pauseButton)pauseButton.disabled=!playing;
- if(seek)seek.disabled=!available||!Number.isFinite(audio.duration)||audio.duration<=0;
+ if(seek)seek.disabled=!available||!positionReady||pendingPosition!==null||!Number.isFinite(audio.duration)||audio.duration<=0;
 }
 function updateTime(reset=false){
  const duration=reset?0:(Number.isFinite(audio.duration)?audio.duration:0),position=reset?0:(Number.isFinite(audio.currentTime)?audio.currentTime:0);
@@ -236,24 +286,32 @@ function updateTime(reset=false){
 }
 function startAudio(){
  if(!hasAudioSource())return;
+ recoverPosition();if(pendingPosition!==null)return;
+ if(audio.ended){try{audio.currentTime=0;}catch(_){}writePosition(0);}
  try{const promise=audio.play();if(promise)promise.catch(err=>{if(err.name==='AbortError')return;$('playbackState').textContent='再生できません。再度お試しください。';log('再生失敗：'+err.message);syncPlayerControls();});}
  catch(err){$('playbackState').textContent='再生できません。再度お試しください。';syncPlayerControls();}
 }
 playButton?.addEventListener('click',startAudio);
 pauseButton?.addEventListener('click',()=>audio.pause());
-seek?.addEventListener('input',()=>{if(!hasAudioSource()||!Number.isFinite(audio.duration)||audio.duration<=0)return;const t=Number(seek.value);if(!Number.isFinite(t))return;try{audio.currentTime=Math.min(audio.duration,Math.max(0,t));updateTime();}catch(_){}});
+seek?.addEventListener('input',()=>seekAudioTo(Number(seek.value)));
 audio.addEventListener('error',()=>{if(audio.error){$('playbackState').textContent='再生エラー（診断ログ参照）';log('audio.error code='+audio.error.code+' message='+audio.error.message);}syncPlayerControls();});
-audio.addEventListener('loadedmetadata',()=>{log('音声読込：'+formatDuration(audio.duration));updateTime();});
+audio.addEventListener('loadedmetadata',()=>{
+ log('音声読込：'+formatDuration(audio.duration));positionReady=Boolean(positionKey);
+ if(positionReady&&pendingPosition===null&&audio.currentTime<0.5&&lastKnownPosition>=1)pendingPosition=lastKnownPosition;
+ restorePosition();updateTime();
+});
+audio.addEventListener('canplay',()=>{restorePosition();updateTime();});
 audio.addEventListener('durationchange',()=>updateTime());
 audio.addEventListener('emptied',()=>updateTime(true));
 audio.addEventListener('play',()=>{log('音声再生開始：'+playMode);$('playbackState').textContent='再生中';syncPlayerControls();});
-audio.addEventListener('pause',()=>{$('playbackState').textContent='一時停止';syncPlayerControls();});
-audio.addEventListener('ended',()=>{$('playbackState').textContent='再生終了';log('音声再生終了');updateTime();});
-audio.addEventListener('timeupdate',()=>updateTime());
-window.addEventListener('pageshow',()=>{showDiagnostics();renderProgress();});
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)showDiagnostics();});
+audio.addEventListener('pause',()=>{checkpointPosition(true);$('playbackState').textContent='一時停止';syncPlayerControls();});
+audio.addEventListener('ended',()=>{pendingPosition=null;writePosition(0);$('playbackState').textContent='再生終了';log('音声再生終了');updateTime();});
+audio.addEventListener('timeupdate',()=>{checkpointPosition();updateTime();});
+window.addEventListener('pagehide',()=>checkpointPosition(true));
+window.addEventListener('pageshow',()=>{recoverPosition();showDiagnostics();renderProgress();});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)checkpointPosition(true);else{recoverPosition();showDiagnostics();}});
 const appReady=startup();
 if('mediaSession' in navigator){
- for(const [action,handler] of Object.entries({play:()=>audio.play().catch(e=>log(e.message)),pause:()=>audio.pause(),seekto:d=>{if(Number.isFinite(d.seekTime))audio.currentTime=d.seekTime;},seekbackward:d=>{audio.currentTime=Math.max(0,audio.currentTime-(d.seekOffset||10));},seekforward:d=>{audio.currentTime=Math.min(audio.duration||0,audio.currentTime+(d.seekOffset||10));}})){try{navigator.mediaSession.setActionHandler(action,handler);}catch(_){}}
+ for(const [action,handler] of Object.entries({play:startAudio,pause:()=>audio.pause(),seekto:d=>seekAudioTo(d.seekTime),seekbackward:d=>seekAudioTo(audio.currentTime-(d.seekOffset||10)),seekforward:d=>seekAudioTo(audio.currentTime+(d.seekOffset||10))})){try{navigator.mediaSession.setActionHandler(action,handler);}catch(_){}}
 }
 
