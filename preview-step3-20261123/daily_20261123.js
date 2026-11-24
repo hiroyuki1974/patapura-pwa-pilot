@@ -1,3 +1,4 @@
+/* build:v12r2-20261124 */
 /* パタプラ v0.7 今日の3レッスン／3教材プログラム */
 (function(){
 'use strict';
@@ -42,6 +43,7 @@ function renderRecords(){
 function setupTheme(){const modes=['auto','light','dark'],labels={auto:'自動',light:'ライト',dark:'ダーク'};let mode='auto';try{const v=localStorage.getItem('patapura-theme');if(modes.includes(v))mode=v;}catch(_){}const mq=matchMedia('(prefers-color-scheme: dark)');const apply=()=>{document.documentElement.dataset.theme=mode==='auto'?(mq.matches?'dark':'light'):mode;$('themeBtn').textContent=labels[mode];$('themeBtn').setAttribute('aria-label','表示モード：'+labels[mode]+'。押すと切り替え');};$('themeBtn').addEventListener('click',()=>{mode=modes[(modes.indexOf(mode)+1)%modes.length];try{localStorage.setItem('patapura-theme',mode);}catch(_){}apply();});mq.addEventListener?.('change',apply);apply();}
 
 function setupFontSize(){
+ if(!$('fontMinus')||!$('fontPlus')||!$('fontReset')||!$('fontPercent'))return;
  const levels=[80,90,100,110,120,130,140,150];
  let size=100;
  try{const stored=Number(localStorage.getItem('patapura-font-percent'));if(levels.includes(stored))size=stored;}catch(_){}
