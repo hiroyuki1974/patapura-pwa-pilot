@@ -3,6 +3,8 @@ const DB_NAME='patapura-pwa-step3-trial-v1';
 const DB_VERSION=1;
 let MEDIA_ID='unselected';
 let selectedLessonId='';
+let selectedRound=1;
+let completing=false;
 const PROGRESS_ID='pilot';
 const CASES=['import','seek','lock','offline','restart','update'];
 const $=id=>document.getElementById(id);
@@ -38,12 +40,14 @@ async function recordDelete(store,id){const db=await openDB();try{return await n
 async function saveProgress(){await recordPut('progress',progress);renderProgress();document.dispatchEvent(new Event('patapura:progress'));}
 function renderProgress(){
  $('todayDate').textContent='日本時間：'+localDate();
- const completed=progress.lessons?.[selectedLessonId]||null;
- const done=completed===localDate();
- $('completeBtn').disabled=!selectedLessonId;
- const nextButton=$('completeNextBtn');if(nextButton){nextButton.disabled=!selectedLessonId;nextButton.textContent=completed?'次の教材へ':'完了して次の教材へ';}
- $('completeBtn').textContent=done?'完了取消':'学習完了にする';$('completeBtn').classList.toggle('done',done);
- $('completeState').textContent=completed?`このレッスンの完了日：${completed}`:'このレッスンは未完了';
+ const completed=PatapuraDailyCore.readDate(progress,selectedLessonId,selectedRound);
+ $('lessonRound').value=String(selectedRound);
+ $('lessonRound').disabled=!selectedLessonId||completing;
+ $('completeBtn').disabled=!selectedLessonId||Boolean(completed)||completing;
+ $('completeBtn').textContent=completed?'完了済み':'学習完了';
+ $('completeBtn').classList.toggle('done',Boolean(completed));
+ $('completeNextBtn').textContent='今日の学習へ戻る';
+ $('completeState').textContent=selectedRound+'周目：'+(completed?'完了 '+completed:'未完了');
  CASES.forEach(key=>{const input=document.querySelector(`[data-check="${key}"]`);if(input)input.checked=!!progress.checks[key];});
  $('checkedCount').textContent=CASES.filter(k=>progress.checks[k]).length+' / 6';
 }
@@ -76,7 +80,7 @@ function refreshAudio(){
    objectURL=URL.createObjectURL(audioRecord.blob);audio.src=objectURL;log('音声ソース：IndexedDB Blob URL');
  }
  audio.load();$('playbackState').textContent='再生準備中';
- if('mediaSession'in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:selectedLessonId+' / '+readableFilename(audioRecord.filename),artist:'パタプラ個人学習',album:'Patapura v1.0'});}catch(err){log('MediaSessionメタデータ不可：'+err.message);}}
+ if('mediaSession'in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:selectedLessonId+' / '+readableFilename(audioRecord.filename),artist:'パタプラ個人学習',album:'Patapura v1.1'});}catch(err){log('MediaSessionメタデータ不可：'+err.message);}}
 }
 async function showDiagnostics(){
  const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
@@ -109,7 +113,7 @@ async function setupServiceWorker(){
 }
 function downloadBlob(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),12000);}
 async function startup(){
- log('アプリ起動：'+location.href);log('バージョン：2026-11-24 v1.0');
+ log('アプリ起動：'+location.href);log('バージョン：2026-11-24 v1.1');
  if(!('indexedDB'in window)){notice('IndexedDBに対応しない環境です');log('IDBなし：続行不可');return;}
  try{progress=(await recordGet('progress',PROGRESS_ID))||progress;audioRecord=await recordGet('audio',MEDIA_ID);renderStorage();renderProgress();refreshAudio();log('IDB復元：'+(audioRecord?'音声あり':'音声なし')+'／'+(progress.completedOn||'進捗なし'));}
  catch(err){notice('保存領域の読込に失敗しました');log('IDB読込エラー：'+err.message);}
@@ -128,37 +132,24 @@ $('rangeCheck').addEventListener('click',async()=>{
  catch(err){log('Range試験エラー：'+err.message);notice('Range試験に失敗しました');}
 });
 $('completeBtn').addEventListener('click',async()=>{
- if(!selectedLessonId)return;
- progress.lessons=progress.lessons||{};
- progress.lessons[selectedLessonId]=progress.lessons[selectedLessonId]===localDate()?null:localDate();
- progress.completedOn=progress.lessons[selectedLessonId];
- try{await saveProgress();notice('進捗を端末内に保存しました');log('完了変更：'+(progress.completedOn||'取消'));}catch(err){notice('進捗保存失敗');log('進捗保存失敗：'+err.message);}
+ if(!selectedLessonId||completing)return;
+ const D=PatapuraDailyCore,id=selectedLessonId,r=selectedRound;
+ if(D.readDate(progress,id,r))return;
+ const previous=progress.completedOn;
+ completing=true;renderProgress();
+ try{const date=localDate();D.setDate(progress,id,r,date);progress.completedOn=date;await saveProgress();notice(r+'周目の学習完了を記録しました');}
+ catch(err){D.setDate(progress,id,r,null);progress.completedOn=previous;notice('学習記録の保存に失敗しました');log('進捗保存失敗：'+err.message);}
+ finally{completing=false;renderProgress();}
 });
-$('completeNextBtn').addEventListener('click',async()=>{
+$('completeNextBtn').addEventListener('click',()=>{
+ document.dispatchEvent(new Event('patapura:home'));
+});
+$('lessonRound').addEventListener('change',async()=>{
  if(!selectedLessonId)return;
- const currentId=selectedLessonId;
- progress.lessons=progress.lessons||{};
- if(!progress.lessons[currentId]){
-  progress.lessons[currentId]=localDate();
-  progress.completedOn=progress.lessons[currentId];
-  try{await saveProgress();log('学習完了・次教材：'+currentId);}
-  catch(err){notice('進捗を保存できません。画面移動は中止します');log('進捗保存失敗：'+err.message);return;}
- }
- const D=PatapuraDailyCore;
- const plan=progress.dailyPlan?.date===localDate()?progress.dailyPlan:D.plan(progress,localDate());
- const keys=D.PROGRAMS.map(p=>p.key);
- const pos=keys.findIndex(k=>plan.ids[k]===currentId);
- const order=pos<0?keys:[...keys.slice(pos+1),...keys.slice(0,pos)];
- const nextKey=order.find(k=>plan.ids[k]&&!progress.lessons?.[plan.ids[k]]);
- if(nextKey){
-  const id=plan.ids[nextKey],track=id.split(':')[0];
-  document.dispatchEvent(new CustomEvent('patapura:navigate',{detail:{track,id,kind:track==='colloquial'?'type_b':'review'}}));
-  $('secOfflineLibrary')?.scrollIntoView({behavior:'smooth',block:'start'});
-  notice('次は「'+D.PROGRAMS.find(p=>p.key===nextKey).title+'」です');
- }else{
-  $('dailyPanel')?.scrollIntoView({behavior:'smooth',block:'start'});
-  notice('今日の学習が完了しました');
- }
+ selectedRound=PatapuraDailyCore.normalizeRound($('lessonRound').value);
+ progress.selection={...(progress.selection||{}),track:selectedLessonId.split(':')[0],id:selectedLessonId,kind:$('audioKindSelect').value,round:selectedRound};
+ renderProgress();
+ try{await saveProgress();}catch(err){log('周回選択保存失敗：'+err.message);}
 });
 $('checkList').addEventListener('change',async e=>{
  const key=e.target?.dataset?.check;if(!CASES.includes(key))return;
@@ -175,6 +166,7 @@ $('backupFile').addEventListener('change',async e=>{
  try{const obj=JSON.parse(await file.text());if(obj.format!=='patapura-pwa-pilot-progress-v1'||!obj.progress||obj.progress.id!==PROGRESS_ID||typeof obj.progress.checks!=='object')throw Error('この試験版のバックアップではありません');
  progress={id:PROGRESS_ID,completedOn:typeof obj.progress.completedOn==='string'?obj.progress.completedOn:null,checks:Object.fromEntries(CASES.map(k=>[k,!!obj.progress.checks[k]]))};
  progress.lessons=Object.fromEntries(Object.entries(obj.progress.lessons||{}).filter(([k,v])=>/^(standard|meeting|facilitation|colloquial):[1-9]\d?$/.test(k)&&(v===null||typeof v==='string')));
+ progress.rounds=PatapuraDailyCore.cleanRounds(obj.progress.rounds);
  progress.selection=obj.progress.selection;
  progress.dailyPlan=obj.progress.dailyPlan;
  await saveProgress();document.dispatchEvent(new Event('progressrestored'));notice('バックアップから復元しました');log('進捗JSON復元');}
