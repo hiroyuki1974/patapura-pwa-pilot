@@ -1,7 +1,7 @@
-/* build:v17controls-20261125 */
+/* build:v18topplayer-20261125 */
 'use strict';
 const DB_NAME='patapura-pwa-step3-trial-v1';
-const APP_BUILD='v17controls-20261125';
+const APP_BUILD='v18topplayer-20261125';
 let swRegistration=null,checkingAppUpdate=false;
 const DB_VERSION=1;
 let MEDIA_ID='unselected';
@@ -93,7 +93,7 @@ function refreshAudio(){
  lastKnownPosition=readPosition(positionKey);
  pendingPosition=lastKnownPosition>0?lastKnownPosition:null;
  audio.playbackRate=1;audio.defaultPlaybackRate=1;audio.load();$('playbackState').textContent='再生準備中';syncPlayerControls();
- if('mediaSession'in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:selectedLessonId+' / '+readableFilename(audioRecord.filename),artist:'パタプラ個人学習',album:'Patapura v1.7'});}catch(err){log('MediaSessionメタデータ不可：'+err.message);}}
+ if('mediaSession'in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:selectedLessonId+' / '+readableFilename(audioRecord.filename),artist:'パタプラ個人学習',album:'Patapura v1.8'});}catch(err){log('MediaSessionメタデータ不可：'+err.message);}}
 }
 async function showDiagnostics(){
  const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
@@ -154,7 +154,7 @@ async function checkAppUpdate(){
 $('checkAppUpdate')?.addEventListener('click',checkAppUpdate);
 function downloadBlob(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),12000);}
 async function startup(){
- log('アプリ起動：'+location.href);log('バージョン：2026-11-25 v1.7');
+ log('アプリ起動：'+location.href);log('バージョン：2026-11-25 v1.8');
  if(!('indexedDB'in window)){notice('IndexedDBに対応しない環境です');log('IDBなし：続行不可');return;}
  try{progress=(await recordGet('progress',PROGRESS_ID))||progress;audioRecord=await recordGet('audio',MEDIA_ID);renderStorage();renderProgress();refreshAudio();log('IDB復元：'+(audioRecord?'音声あり':'音声なし')+'／'+(progress.completedOn||'進捗なし'));}
  catch(err){notice('保存領域の読込に失敗しました');log('IDB読込エラー：'+err.message);}
@@ -315,36 +315,6 @@ audio.addEventListener('timeupdate',()=>{checkpointPosition();updateTime();});
 window.addEventListener('pagehide',()=>checkpointPosition(true));
 window.addEventListener('pageshow',()=>{recoverPosition();showDiagnostics();renderProgress();});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)checkpointPosition(true);else{recoverPosition();showDiagnostics();}});
-// Keep the two primary actions visible without occupying the top safe area.
-function setupStudyDock(){
- const slot=$('studyActionSlot'),bar=$('studyActions'),study=$('studyView');
- if(!slot||!bar||!study)return;
- const lesson=slot.closest('section');
- let queued=false;
- function sync(){
-  queued=false;
-  const visible=!study.hidden&&slot.getClientRects().length>0;
-  const rect=slot.getBoundingClientRect();
-  const threshold=88;
-  const dock=visible&&rect.top<threshold&&lesson.getBoundingClientRect().bottom>0;
-  bar.classList.toggle('is-docked',dock);
-  document.body.classList.toggle('study-controls-docked',dock);
- }
- function schedule(){if(!queued){queued=true;requestAnimationFrame(sync);}}
- window.addEventListener('scroll',schedule,{passive:true});
- window.addEventListener('resize',schedule);
- window.addEventListener('pageshow',schedule);
- window.visualViewport?.addEventListener('resize',schedule);
- window.visualViewport?.addEventListener('scroll',schedule);
- document.addEventListener('patapura:selection',schedule);
- document.addEventListener('patapura:library-ready',schedule);
- for(const id of ['showStudy','showRecords','showSettings'])$(id)?.addEventListener('click',schedule);
- document.addEventListener('patapura:home',schedule);
- document.addEventListener('visibilitychange',schedule);
- if(typeof ResizeObserver!=='undefined')new ResizeObserver(schedule).observe(lesson);
- schedule();
-}
-document.addEventListener('DOMContentLoaded',setupStudyDock);
 const appReady=startup();
 if('mediaSession' in navigator){
  for(const [action,handler] of Object.entries({play:startAudio,pause:()=>audio.pause(),seekto:d=>seekAudioTo(d.seekTime),seekbackward:d=>seekAudioTo(audio.currentTime-(d.seekOffset||10)),seekforward:d=>seekAudioTo(audio.currentTime+(d.seekOffset||10))})){try{navigator.mediaSession.setActionHandler(action,handler);}catch(_){}}
