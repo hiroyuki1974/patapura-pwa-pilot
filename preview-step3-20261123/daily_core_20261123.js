@@ -1,9 +1,11 @@
+/* build:v13-20261124 */
 /* パタプラ v0.7 日々の学習順序（個人用。教材本文を含まない） */
 (function(root){
 'use strict';
 const business=Array.from({length:62},(_,i)=>'standard:'+(i+1));
 const meeting=[];
-for(let i=1;i<=56;i++){meeting.push('meeting:'+i);if(i<=19)meeting.push('facilitation:'+i);}
+for(let i=1;i<=56;i++){meeting.push('meeting:'+i);if(i%3===0)meeting.push('facilitation:'+(i/3));}
+meeting.push('facilitation:19');
 const colloquial=Array.from({length:80},(_,i)=>'colloquial:'+(i+1));
 const PROGRAMS=[
  {key:'business',title:'ビジネス',sequence:business},
