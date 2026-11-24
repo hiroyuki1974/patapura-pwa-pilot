@@ -15,8 +15,8 @@ jobs:
     steps:
       - name: Install Web Push library
         env:
-          PUSH_CONFIG: ${{ secrets.PATAPURA_PUSH_CONFIG }}
-        if: ${{ env.PUSH_CONFIG != '' }}
+          HAS_PUSH: ${{ secrets.PATAPURA_PUSH_CONFIG != '' }}
+        if: ${{ env.HAS_PUSH == 'true' }}
         run: npm install --no-save --ignore-scripts --no-audit --no-fund web-push@3.6.7
       - name: Send personal notification
         env:
@@ -35,7 +35,7 @@ jobs:
             if(!c.publicKey||!c.privateKey||!c.subscription.keys?.auth||!c.subscription.keys?.p256dh)throw Error('Invalid configuration');
             const test=process.env.EVENT_NAME==='workflow_dispatch';
             const payload={web_push:8030,notification:{title:test?'パタプラ｜通知試験':'今日のパタプラ',body:test?'タップして学習アプリが開くか確認してください。':'今日も3レッスン。タップして学習を始めましょう。',lang:'ja',navigate:app,tag:'patapura-daily',app_badge:'1'}};
-            await webpush.sendNotification(c.subscription,JSON.stringify(payload),{TTL:3600,urgency:'normal',contentEncoding:'aes128gcm',vapidDetails:{subject:'mailto:hiroporo.sbt@gmail.com',publicKey:c.publicKey,privateKey:c.privateKey}});
+            await webpush.sendNotification(c.subscription,JSON.stringify(payload),{TTL:3600,urgency:'normal',contentEncoding:'aes128gcm',vapidDetails:{subject:app,publicKey:c.publicKey,privateKey:c.privateKey}});
             console.log('Push accepted by the push service.');
           })().catch(e=>{console.error('Push failed; status: '+(Number.isInteger(e.statusCode)?e.statusCode:'configuration or transport error'));process.exitCode=1;});
           NODE
