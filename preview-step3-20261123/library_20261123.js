@@ -1,3 +1,4 @@
+/* build:v13-20261124 */
 /* v0.6 / 2026-11-23. Adapted from the v0.5 offline reader. */
 (function(){
 'use strict';
@@ -58,17 +59,17 @@ async function selectAudio(persist=true){
   audioRecord=record;renderStorage();refreshAudio();
   status.textContent=record?'':`${C.label(kind)}：未登録`;
   status.hidden=Boolean(record);
-  if(row)row.hidden=Boolean(record)&&lesson.track!=='colloquial';
+  if(row)row.hidden=Boolean(record);
   if(persist){progress.selection={track:lesson.track,id:lesson.id,kind,round:selectedRound};await saveProgress();}
  }catch(err){if(token===selectionToken){$('selectedAudioStatus').textContent='音声読込失敗：'+err.message;log('音声読込失敗：'+err.message);}}
 }
 function refreshAudioKinds(preferred){
  const lesson=currentLesson(),select=$('audioKindSelect');select.replaceChildren();
- select.hidden=!lesson||lesson.track!=='colloquial';
+ select.hidden=true;
  if(lesson){
   const allowed=lesson.track==='colloquial'?['type_b','type_c']:['review'];
   for(const a of C.candidates(lesson.track,lesson.number).filter(a=>allowed.includes(a.kind)))option(select,a.kind,a.label+(audioKeys.has(a.key)?'':'・未登録'));
-  select.value=allowed.includes(preferred)?preferred:allowed[0];
+  select.value=lesson.track==='colloquial'?preferredColloquialKind():'review';
  }
 }
 async function showLesson(persist=true,preferred){
@@ -76,22 +77,23 @@ async function showLesson(persist=true,preferred){
  renderBody(lesson);refreshAudioKinds(preferred);renderProgress();await selectAudio(persist);
  document.dispatchEvent(new Event('patapura:selection'));
 }
-async function refreshLessons(preferred,persist=true,kind){
+async function refreshLessons(preferred,persist=true,kind,round){
  const select=$('offlineLessonSelect');select.replaceChildren();
  for(const l of library?.lessons.filter(l=>l.track===$('offlineCourseSelect').value).sort((a,b)=>a.number-b.number)||[])option(select,l.id,l.title);
  if([...select.options].some(o=>o.value===preferred))select.value=preferred;
+ const lesson=currentLesson();
+ selectedRound=lesson?PatapuraDailyCore.roundForLesson(progress,lesson.id,localDate()):1;
  await showLesson(persist,kind);
 }
 async function refreshCourses(selection=progress.selection,persist=true){
  const select=$('offlineCourseSelect');select.replaceChildren();
  for(const t of C.ORDER)if(library)option(select,t,C.NAMES[t]);
  if(C.ORDER.includes(selection?.track))select.value=selection.track;
- selectedRound=selection?.round?PatapuraDailyCore.normalizeRound(selection.round):PatapuraDailyCore.roundForLesson(progress,selection?.id,localDate());
- await refreshLessons(selection?.id,persist,selection?.kind);
+ await refreshLessons(selection?.id,persist,selection?.kind,selection?.round);
 }
 function setBusy(value){
  busy=value;
- for(const id of ['offlineJsonFiles','audioFile','audioImportCourse','offlineCourseSelect','offlineLessonSelect','audioKindSelect','resetData','backupFile','programSelect','unifiedLessonSelect','lessonRound'])if($(id))$(id).disabled=value;
+ for(const id of ['offlineJsonFiles','audioFile','audioImportCourse','offlineCourseSelect','offlineLessonSelect','audioKindSelect','resetData','backupFile','programSelect','unifiedLessonSelect','colloquialPreference'])if($(id))$(id).disabled=value;
  $('cancelAudioImport').disabled=!value;
 }
 function batchStatus(r){
@@ -128,6 +130,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
  $('offlineCourseSelect').addEventListener('change',()=>refreshLessons().catch(e=>report(e.message,true)));
  $('offlineLessonSelect').addEventListener('change',()=>showLesson().catch(e=>report(e.message,true)));
  $('audioKindSelect').addEventListener('change',()=>selectAudio().catch(e=>report(e.message,true)));
+ document.addEventListener('patapura:audio-preference',()=>{if(currentLesson()?.track==='colloquial'&&!busy){refreshAudioKinds();selectAudio().catch(e=>report(e.message,true));}});
  document.addEventListener('patapura:bulk-start',()=>setBusy(true));
  document.addEventListener('patapura:bulk-done',async()=>{try{await loadAudioKeys();renderSummary();refreshAudioKinds($('audioKindSelect').value);await selectAudio(false);await showDiagnostics();}catch(err){report('音声一覧の更新失敗：'+err.message,true);}finally{setBusy(false);}});
  document.addEventListener('patapura:navigate',e=>{
