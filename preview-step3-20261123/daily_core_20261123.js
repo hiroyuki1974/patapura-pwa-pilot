@@ -1,4 +1,4 @@
-/* build:v13-20261124 */
+/* build:v14push-20261124 */
 /* パタプラ v0.7 日々の学習順序（個人用。教材本文を含まない） */
 (function(root){
 'use strict';
