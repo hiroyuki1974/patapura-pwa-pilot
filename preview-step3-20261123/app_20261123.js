@@ -1,7 +1,7 @@
-/* build:v23themes-20261125 */
+/* build:v24dailyplay-20261126 */
 'use strict';
 const DB_NAME='patapura-pwa-step3-trial-v1';
-const APP_BUILD='v23themes-20261125';
+const APP_BUILD='v24dailyplay-20261126';
 let swRegistration=null,checkingAppUpdate=false;
 const DB_VERSION=1;
 let MEDIA_ID='unselected';
@@ -14,7 +14,7 @@ const $=id=>document.getElementById(id);
 const audio=$('audioPlayer');
 const logLines=[];
 let audioRecord=null, progress={id:PROGRESS_ID,completedOn:null,checks:{}};
-let playMode='blob', objectURL=null, serviceWorkerReady=false;
+let playMode='blob', objectURL=null, serviceWorkerReady=false, audioSourceEpoch=0;
 let toastHandle=0;
 function log(message){
  const line=new Date().toLocaleTimeString('ja-JP',{hour12:false})+' '+message;
@@ -76,6 +76,7 @@ function chooseMode(mode){
  refreshAudio();
 }
 function refreshAudio(){
+ audioSourceEpoch++;
  // Capture the OLD track with its own key before replacing the source.
  checkpointPosition(true);
  positionKey=null;positionReady=false;pendingPosition=null;lastKnownPosition=0;lastSavedAt=0;
@@ -93,7 +94,7 @@ function refreshAudio(){
  lastKnownPosition=readPosition(positionKey);
  pendingPosition=lastKnownPosition>0?lastKnownPosition:null;
  audio.playbackRate=1;audio.defaultPlaybackRate=1;audio.load();$('playbackState').textContent='準備中';syncPlayerControls();
- if('mediaSession'in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:selectedLessonId+' / '+readableFilename(audioRecord.filename),artist:'パタプラ個人学習',album:'Patapura v2.3'});}catch(err){log('MediaSessionメタデータ不可：'+err.message);}}
+ if('mediaSession'in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:selectedLessonId+' / '+readableFilename(audioRecord.filename),artist:'パタプラ個人学習',album:'Patapura v2.4'});}catch(err){log('MediaSessionメタデータ不可：'+err.message);}}
 }
 async function showDiagnostics(){
  const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
@@ -154,7 +155,7 @@ async function checkAppUpdate(){
 $('checkAppUpdate')?.addEventListener('click',checkAppUpdate);
 function downloadBlob(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),12000);}
 async function startup(){
- log('アプリ起動：'+location.href);log('バージョン：2026-11-25 v2.3');
+ log('アプリ起動：'+location.href);log('バージョン：2026-11-26 v2.4');
  if(!('indexedDB'in window)){notice('IndexedDBに対応しない環境です');log('IDBなし：続行不可');return;}
  try{progress=(await recordGet('progress',PROGRESS_ID))||progress;audioRecord=await recordGet('audio',MEDIA_ID);renderStorage();renderProgress();refreshAudio();log('IDB復元：'+(audioRecord?'音声あり':'音声なし')+'／'+(progress.completedOn||'進捗なし'));}
  catch(err){notice('保存領域の読込に失敗しました');log('IDB読込エラー：'+err.message);}
@@ -294,12 +295,25 @@ function updateTime(reset=false){
  if(seek){seek.max=String(duration||1);seek.value=String(Math.min(position,duration));seek.setAttribute('aria-valuetext',formatDuration(position)+' / '+formatDuration(duration));}
  syncPlayerControls();
 }
-function startAudio(){
+function startAudio(fromDaily=false){
  if(!hasAudioSource())return;
- recoverPosition();if(pendingPosition!==null)return;
+ recoverPosition();
+ if(pendingPosition!==null){
+  if(fromDaily!==true)return;
+  // Assign the initial playback offset and invoke play within the original tap.
+  // loadedmetadata/canplay also restore and verify the saved offset.
+  try{audio.currentTime=pendingPosition;}catch(_){}
+ }
  if(audio.ended){try{audio.currentTime=0;}catch(_){}writePosition(0);}
- try{const promise=audio.play();if(promise)promise.catch(err=>{if(err.name==='AbortError')return;$('playbackState').textContent='再生できません。再度お試しください。';log('再生失敗：'+err.message);syncPlayerControls();});}
- catch(err){$('playbackState').textContent='再生できません。再度お試しください。';syncPlayerControls();}
+ const epoch=audioSourceEpoch;
+ const failed=err=>{
+  if(epoch!==audioSourceEpoch||err.name==='AbortError')return;
+  $('playbackState').textContent=err.name==='NotAllowedError'?'再生を押す':'再生エラー';
+  if(err.name==='NotAllowedError'&&fromDaily===true)notice('自動再生が制限されました。再生ボタンを押してください。');
+  log('再生失敗：'+err.message);syncPlayerControls();
+ };
+ try{const promise=audio.play();if(promise)promise.catch(failed);}
+ catch(err){failed(err);}
 }
 playButton?.addEventListener('click',()=>{
  if(!audio.paused&&!audio.ended)audio.pause();else startAudio();
