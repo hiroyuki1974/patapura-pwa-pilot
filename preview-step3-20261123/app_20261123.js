@@ -1,7 +1,7 @@
-/* build:v19topalign-20261125 */
+/* build:v20compact-20261125 */
 'use strict';
 const DB_NAME='patapura-pwa-step3-trial-v1';
-const APP_BUILD='v19topalign-20261125';
+const APP_BUILD='v20compact-20261125';
 let swRegistration=null,checkingAppUpdate=false;
 const DB_VERSION=1;
 let MEDIA_ID='unselected';
@@ -48,7 +48,7 @@ function renderProgress(){
  $('completeBtn').textContent=completed?'完了取消':'学習完了';
  $('completeBtn').setAttribute('aria-label',completed?'選択中の周回の学習完了を取り消す':'選択中の周回の学習完了を記録する');
  $('completeBtn').classList.toggle('done',Boolean(completed));
- $('completeNextBtn').textContent='今日の学習へ戻る';
+ $('completeNextBtn').textContent='戻る';
  $('completeState').textContent=completed?'完了 '+completed:'未完了';
  CASES.forEach(key=>{const input=document.querySelector(`[data-check="${key}"]`);if(input)input.checked=!!progress.checks[key];});
  $('checkedCount').textContent=CASES.filter(k=>progress.checks[k]).length+' / 6';
@@ -92,8 +92,8 @@ function refreshAudio(){
  positionKey=MEDIA_ID!=='unselected'?'patapura-audio-position-v1:'+MEDIA_ID+':r'+selectedRound:null;
  lastKnownPosition=readPosition(positionKey);
  pendingPosition=lastKnownPosition>0?lastKnownPosition:null;
- audio.playbackRate=1;audio.defaultPlaybackRate=1;audio.load();$('playbackState').textContent='再生準備中';syncPlayerControls();
- if('mediaSession'in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:selectedLessonId+' / '+readableFilename(audioRecord.filename),artist:'パタプラ個人学習',album:'Patapura v1.9'});}catch(err){log('MediaSessionメタデータ不可：'+err.message);}}
+ audio.playbackRate=1;audio.defaultPlaybackRate=1;audio.load();$('playbackState').textContent='準備中';syncPlayerControls();
+ if('mediaSession'in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:selectedLessonId+' / '+readableFilename(audioRecord.filename),artist:'パタプラ個人学習',album:'Patapura v2.0'});}catch(err){log('MediaSessionメタデータ不可：'+err.message);}}
 }
 async function showDiagnostics(){
  const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
@@ -154,7 +154,7 @@ async function checkAppUpdate(){
 $('checkAppUpdate')?.addEventListener('click',checkAppUpdate);
 function downloadBlob(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),12000);}
 async function startup(){
- log('アプリ起動：'+location.href);log('バージョン：2026-11-25 v1.9');
+ log('アプリ起動：'+location.href);log('バージョン：2026-11-25 v2.0');
  if(!('indexedDB'in window)){notice('IndexedDBに対応しない環境です');log('IDBなし：続行不可');return;}
  try{progress=(await recordGet('progress',PROGRESS_ID))||progress;audioRecord=await recordGet('audio',MEDIA_ID);renderStorage();renderProgress();refreshAudio();log('IDB復元：'+(audioRecord?'音声あり':'音声なし')+'／'+(progress.completedOn||'進捗なし'));}
  catch(err){notice('保存領域の読込に失敗しました');log('IDB読込エラー：'+err.message);}
