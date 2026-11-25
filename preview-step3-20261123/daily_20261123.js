@@ -1,4 +1,4 @@
-/* build:v23themes-20261125 */
+/* build:v24dailyplay-20261126 */
 /* パタプラ v0.7 今日の3レッスン／3教材プログラム */
 (function(){
 'use strict';
@@ -83,7 +83,7 @@ function makeButton(task){
  b.disabled=!task.id;
  b.addEventListener('click',()=>{
   const [track]=task.id.split(':');
-  document.dispatchEvent(new CustomEvent('patapura:navigate',{detail:{track,id:task.id,round:task.round,kind:track==='colloquial'?preferredColloquialKind():'review'}}));
+  document.dispatchEvent(new CustomEvent('patapura:navigate',{detail:{track,id:task.id,round:task.round,autoPlay:true,kind:track==='colloquial'?preferredColloquialKind():'review'}}));
   document.getElementById('secOfflineLibrary')?.scrollIntoView({behavior:'smooth',block:'start'});
  });
  return b;
