@@ -1,12 +1,12 @@
 # v1.4 Web Push 試験版（2026-11-24）
 ## 目的
-毎朝5:00（JST）にPWAの通知を送信。タップで既存のホーム画面アプリを起動する。本文217件、復習音声297本、記録を含む既存IndexedDB・manifest ID・scope・URLを維持。通知のために教材・進捗を送信しない。
+毎朝3:00（JST）にPWAの通知を送信。タップで既存のホーム画面アプリを起動する。本文217件、復習音声297本、記録を含む既存IndexedDB・manifest ID・scope・URLを維持。通知のために教材・進捗を送信しない。
 ## 初回登録
 1. ホーム画面PWAをオンラインで起動し、設定の「最新版を確認・更新する」でv1.4に更新。
 2. 設定の「毎朝の学習通知（試験）」→「通知を準備」→「通知を許可」。iOSのダイアログでも許可。
 3. 「登録情報を安全にコピー」を押す。VAPID鍵とPushSubscriptionを画面に表示せずコピーする。GitHubのリポジトリSettings → Secrets and variables → Actions → New repository secretで、名前を PATAPURA_PUSH_CONFIG として値欄に貼る。チャット、公開ファイル、メールには貼らない。
 4. Actions → Patapura daily push → Run workflow で手動送信。送信サービスの受理とiPhoneの受信・タップ起動・既存データ表示を確認。未設定では送信しない。
-5. 配信は毎朝5:00 JST（UTC 20:00）を予定。GitHub Actionsの混雑で遅延する場合があり、公開リポジトリに60日間活動がないとスケジュール停止の可能性がある。必要時は非公開送信リポジトリを別途検討する。
+5. 配信は毎朝3:00 JST（UTC 18:00）を予定。GitHub Actionsの混雑で遅延する場合があり、公開リポジトリに60日間活動がないとスケジュール停止の可能性がある。必要時は非公開送信リポジトリを別途検討する。
 ## 設計
 - WebKitのDeclarative Web Pushのimmutableペイロードにnavigateとapp_badgeを指定。従来Web Push用のSW fallbackも追加。
 - 端末内でP-256鍵を生成、ローカル保存。購読とVAPID秘密鍵をGitHub Actions Secretにだけ登録。公開ソースには実値を含めない。依存ライブラリのインストール段階にはSecret本体を渡さない。送信ログに秘密情報・エンドポイントを出さない。
