@@ -1,4 +1,4 @@
-/* build:v21inline-20261125 */
+/* build:v22headings-20261125 */
 /* パタプラ v0.7 今日の3レッスン／3教材プログラム */
 (function(){
 'use strict';
