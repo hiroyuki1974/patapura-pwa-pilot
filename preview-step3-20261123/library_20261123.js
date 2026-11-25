@@ -1,4 +1,4 @@
-/* build:v25status-20261126 */
+/* build:v26push0300-20261126 */
 /* v0.6 / 2026-11-23. Adapted from the v0.5 offline reader. */
 (function(){
 'use strict';
