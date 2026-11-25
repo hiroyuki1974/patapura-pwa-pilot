@@ -1,4 +1,4 @@
-/* build:v22headings-20261125 */
+/* build:v23themes-20261125 */
 /* v0.6 / 2026-11-23. Adapted from the v0.5 offline reader. */
 (function(){
 'use strict';
