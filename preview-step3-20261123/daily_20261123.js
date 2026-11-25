@@ -1,4 +1,4 @@
-/* build:v22headings-20261125 */
+/* build:v23themes-20261125 */
 /* パタプラ v0.7 今日の3レッスン／3教材プログラム */
 (function(){
 'use strict';
@@ -40,7 +40,7 @@ function renderRecords(){
   rows.append(tr);
  }
 }
-function setupTheme(){const modes=['auto','light','dark'],labels={auto:'自動',light:'ライト',dark:'ダーク'};let mode='auto';try{const v=localStorage.getItem('patapura-theme');if(modes.includes(v))mode=v;}catch(_){}const mq=matchMedia('(prefers-color-scheme: dark)');const apply=()=>{document.documentElement.dataset.theme=mode==='auto'?(mq.matches?'dark':'light'):mode;$('themeBtn').textContent=labels[mode];$('themeBtn').setAttribute('aria-label','表示モード：'+labels[mode]+'。押すと切り替え');};$('themeBtn').addEventListener('click',()=>{mode=modes[(modes.indexOf(mode)+1)%modes.length];try{localStorage.setItem('patapura-theme',mode);}catch(_){}apply();});mq.addEventListener?.('change',apply);apply();}
+function setupTheme(){const modes=['auto','light','dark','sepia'],labels={auto:'自動',light:'ライト',dark:'ダーク',sepia:'セピア'};let mode='auto';try{const v=localStorage.getItem('patapura-theme');if(modes.includes(v))mode=v;}catch(_){}const mq=matchMedia('(prefers-color-scheme: dark)');const apply=()=>{const resolved=mode==='auto'?(mq.matches?'dark':'light'):mode;document.documentElement.dataset.theme=resolved;document.querySelector('meta[name="theme-color"]')?.setAttribute('content',resolved==='dark'?'#000000':resolved==='sepia'?'#e9dcc3':'#eef3f5');$('themeBtn').textContent=labels[mode];$('themeBtn').setAttribute('aria-label','表示モード：'+labels[mode]+'。押すと切り替え');};$('themeBtn').addEventListener('click',()=>{mode=modes[(modes.indexOf(mode)+1)%modes.length];try{localStorage.setItem('patapura-theme',mode);}catch(_){}apply();});mq.addEventListener?.('change',apply);apply();}
 
 function setupFontSize(){
  if(!$('fontMinus')||!$('fontPlus')||!$('fontReset')||!$('fontPercent'))return;
