@@ -1,10 +1,27 @@
-/* build:v23themes-20261125 */
+/* build:v24dailyplay-20261126 */
 /* v0.6 / 2026-11-23. Adapted from the v0.5 offline reader. */
 (function(){
 'use strict';
 const C=PatapuraCore, $=id=>document.getElementById(id);
 const KEY='display-library:all217';
 let library=null,audioKeys=new Set(),busy=false,cancelImport=false,selectionToken=0;
+let dailyAudioCache=new Map(),warmSignature='',warmGeneration=0,autoPlayEpoch=0;
+function invalidateDailyAudio(){warmGeneration++;dailyAudioCache.clear();warmSignature='';}
+function warmDailyAudio(){
+ if(!library||busy)return;
+ const plan=PatapuraDailyCore.plan(progress,localDate());
+ const ids=Object.values(plan.ids).filter(Boolean).map(id=>{const [track,num]=id.split(':');return C.audioId(track,Number(num),track==='colloquial'?preferredColloquialKind():'review');});
+ const signature=ids.join('|');
+ if(signature===warmSignature)return;
+ warmSignature=signature;
+ const gen=++warmGeneration;
+ for(const k of dailyAudioCache.keys())if(!ids.includes(k))dailyAudioCache.delete(k);
+ for(const id of ids){
+  if(dailyAudioCache.has(id))continue;
+  if(MEDIA_ID===id&&audioRecord){dailyAudioCache.set(id,audioRecord);continue;}
+  recordGet('audio',id).then(record=>{if(gen===warmGeneration&&record)dailyAudioCache.set(id,record);}).catch(()=>{if(gen===warmGeneration)warmSignature='';});
+ }
+}
 const report=(message,bad=false)=>{$('offlineImportStatus').textContent=message;$('offlineImportStatus').classList.toggle('study-error',bad);};
 function option(select,value,title){const n=document.createElement('option');n.value=value;n.textContent=title;select.append(n);}
 function currentLesson(){return library?.lessons.find(l=>l.id===$('offlineLessonSelect').value&&l.track===$('offlineCourseSelect').value);}
@@ -44,19 +61,23 @@ function renderBody(lesson){
 async function loadAudioKeys(){
  const db=await openDB();try{audioKeys=new Set(await new Promise((resolve,reject)=>{const r=db.transaction('audio','readonly').objectStore('audio').getAllKeys();r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);}));}finally{db.close();}
 }
-async function selectAudio(persist=true){
- const token=++selectionToken,lesson=currentLesson(),kind=$('audioKindSelect').value;
+async function selectAudio(persist=true,autoPlay=false){
+ const token=++selectionToken,epoch=autoPlayEpoch,lesson=currentLesson(),kind=$('audioKindSelect').value;
+ const nextId=lesson?C.audioId(lesson.track,lesson.number,kind):'unselected';
+ const readyRecord=autoPlay&&(MEDIA_ID===nextId&&audioRecord||dailyAudioCache.get(nextId));
  audioRecord=null;refreshAudio();renderStorage();
- MEDIA_ID=lesson?C.audioId(lesson.track,lesson.number,kind):'unselected';
+ MEDIA_ID=nextId;
  const status=$('selectedAudioStatus'),row=status.closest('.audio-kind-row');
  status.hidden=false;if(row)row.hidden=false;
  status.textContent=lesson?'音声を確認中…':'本文JSONを先に取り込んでください';
  if(!lesson)return;
  const id=MEDIA_ID;
  try{
-  const record=await recordGet('audio',id);
+  const record=readyRecord||await recordGet('audio',id);
   if(token!==selectionToken)return;
   audioRecord=record;renderStorage();refreshAudio();
+  // Cached daily tracks take the synchronous path, preserving iOS tap activation.
+  if(autoPlay&&epoch===autoPlayEpoch&&record)startAudio(true);
   status.textContent=record?'':`${C.label(kind)}：未登録`;
   status.hidden=Boolean(record);
   if(row)row.hidden=Boolean(record);
@@ -72,27 +93,29 @@ function refreshAudioKinds(preferred){
   select.value=lesson.track==='colloquial'?preferredColloquialKind():'review';
  }
 }
-async function showLesson(persist=true,preferred){
+async function showLesson(persist=true,preferred,autoPlay=false){
  const lesson=currentLesson();selectedLessonId=lesson?.id||'';
- renderBody(lesson);refreshAudioKinds(preferred);renderProgress();await selectAudio(persist);
+ renderBody(lesson);refreshAudioKinds(preferred);renderProgress();await selectAudio(persist,autoPlay);
  document.dispatchEvent(new Event('patapura:selection'));
 }
-async function refreshLessons(preferred,persist=true,kind,round){
+async function refreshLessons(preferred,persist=true,kind,round,autoPlay=false){
  const select=$('offlineLessonSelect');select.replaceChildren();
  for(const l of library?.lessons.filter(l=>l.track===$('offlineCourseSelect').value).sort((a,b)=>a.number-b.number)||[])option(select,l.id,l.title);
  if([...select.options].some(o=>o.value===preferred))select.value=preferred;
  const lesson=currentLesson();
  selectedRound=lesson?PatapuraDailyCore.roundForLesson(progress,lesson.id,localDate()):1;
- await showLesson(persist,kind);
+ await showLesson(persist,kind,autoPlay);
 }
-async function refreshCourses(selection=progress.selection,persist=true){
+async function refreshCourses(selection=progress.selection,persist=true,autoPlay=false){
  const select=$('offlineCourseSelect');select.replaceChildren();
  for(const t of C.ORDER)if(library)option(select,t,C.NAMES[t]);
  if(C.ORDER.includes(selection?.track))select.value=selection.track;
- await refreshLessons(selection?.id,persist,selection?.kind,selection?.round);
+ await refreshLessons(selection?.id,persist,selection?.kind,selection?.round,autoPlay);
 }
 function setBusy(value){
  busy=value;
+ if(value){autoPlayEpoch++;invalidateDailyAudio();}
+ else warmDailyAudio();
  for(const id of ['offlineJsonFiles','audioFile','audioImportCourse','offlineCourseSelect','offlineLessonSelect','audioKindSelect','resetData','backupFile','programSelect','unifiedLessonSelect','colloquialPreference'])if($(id))$(id).disabled=value;
  $('cancelAudioImport').disabled=!value;
 }
@@ -102,8 +125,12 @@ function batchStatus(r){
 }
 document.addEventListener('DOMContentLoaded',async()=>{
  await appReady;
+ for(const id of ['completeNextBtn','backToTop'])$(id)?.addEventListener('click',()=>autoPlayEpoch++);
+ document.addEventListener('patapura:home',()=>autoPlayEpoch++);
+ document.addEventListener('patapura:progress',warmDailyAudio);
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)warmDailyAudio();});
  for(const t of C.ORDER)option($('audioImportCourse'),t,C.NAMES[t]);
- try{const record=await recordGet('progress',KEY);if(record)library=C.validateLibrary(record.payload);await loadAudioKeys();renderSummary();await refreshCourses(undefined,false);document.dispatchEvent(new Event('patapura:library-ready'));}
+ try{const record=await recordGet('progress',KEY);if(record)library=C.validateLibrary(record.payload);await loadAudioKeys();renderSummary();warmDailyAudio();await refreshCourses(undefined,false);document.dispatchEvent(new Event('patapura:library-ready'));}
  catch(err){report('保存データの読込失敗：'+err.message,true);}
  $('offlineJsonFiles').addEventListener('change',async e=>{
   const file=e.target.files?.[0];if(!file||busy)return;setBusy(true);
@@ -130,15 +157,16 @@ document.addEventListener('DOMContentLoaded',async()=>{
  $('offlineCourseSelect').addEventListener('change',()=>refreshLessons().catch(e=>report(e.message,true)));
  $('offlineLessonSelect').addEventListener('change',()=>showLesson().catch(e=>report(e.message,true)));
  $('audioKindSelect').addEventListener('change',()=>selectAudio().catch(e=>report(e.message,true)));
- document.addEventListener('patapura:audio-preference',()=>{if(currentLesson()?.track==='colloquial'&&!busy){refreshAudioKinds();selectAudio().catch(e=>report(e.message,true));}});
+ document.addEventListener('patapura:audio-preference',()=>{invalidateDailyAudio();warmDailyAudio();if(currentLesson()?.track==='colloquial'&&!busy){refreshAudioKinds();selectAudio().catch(e=>report(e.message,true));}});
  document.addEventListener('patapura:bulk-start',()=>setBusy(true));
  document.addEventListener('patapura:bulk-done',async()=>{try{await loadAudioKeys();renderSummary();refreshAudioKinds($('audioKindSelect').value);await selectAudio(false);await showDiagnostics();}catch(err){report('音声一覧の更新失敗：'+err.message,true);}finally{setBusy(false);}});
  document.addEventListener('patapura:navigate',e=>{
   const choice=e.detail||{};
-  if(!library||!C.ORDER.includes(choice.track))return;
-  refreshCourses({track:choice.track,id:choice.id,kind:choice.kind||(choice.track==='colloquial'?'type_b':'review'),round:choice.round},true).catch(err=>report(err.message,true));
+  if(!library||!C.ORDER.includes(choice.track)||busy)return;
+  const autoPlay=choice.autoPlay===true&&library.lessons.some(l=>l.id===choice.id&&l.track===choice.track);
+  refreshCourses({track:choice.track,id:choice.id,kind:choice.kind||(choice.track==='colloquial'?'type_b':'review'),round:choice.round},true,autoPlay).catch(err=>report(err.message,true));
  });
  document.addEventListener('progressrestored',()=>refreshCourses().catch(e=>report(e.message,true)));
- document.addEventListener('trialreset',()=>{library=null;audioKeys.clear();renderSummary();refreshCourses(undefined,false);});
+ document.addEventListener('trialreset',()=>{library=null;autoPlayEpoch++;invalidateDailyAudio();audioKeys.clear();renderSummary();refreshCourses(undefined,false);});
 });
 })();
