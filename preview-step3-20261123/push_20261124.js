@@ -1,4 +1,4 @@
-/* build:v19topalign-20261125 */
+/* build:v20compact-20261125 */
 (function(){
 'use strict';
 const $=id=>document.getElementById(id);
