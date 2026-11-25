@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#123d59">
-<meta name="patapura-build" content="v18topplayer-20261125">
+<meta name="patapura-build" content="v19topalign-20261125">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="パタプラ試験">
@@ -13,14 +13,14 @@
 <link rel="apple-touch-icon" href="./icon.svg">
 <link rel="icon" href="./icon.svg">
 <script>try{var t=localStorage.getItem("patapura-theme")||"auto";document.documentElement.dataset.theme=t==="auto"?(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t}catch(e){}</script>
-<link rel="stylesheet" href="./style_20261123.css?build=v18topplayer-20261125">
-<title>今日のパタプラ｜v1.8</title>
+<link rel="stylesheet" href="./style_20261123.css?build=v19topalign-20261125">
+<title>今日のパタプラ｜v1.9</title>
 </head>
 <body>
 <main class="wrap">
 <header class="header">
  <div class="compact-heading"><h1>今日のパタプラ</h1><button id="themeBtn" class="outline" type="button" aria-label="表示モードを変更">自動</button></div>
- <div class="status-row"><span class="tag">v1.8 · 2026.11.25</span><span id="modeLabel" class="tag tag-muted">起動環境を確認中</span></div>
+ <div class="status-row"><span class="tag">v1.9 · 2026.11.25</span><span id="modeLabel" class="tag tag-muted">起動環境を確認中</span></div>
  <nav class="top-nav" aria-label="画面切替"><button type="button" id="showStudy" aria-pressed="true">学習</button><button type="button" id="showRecords" aria-pressed="false">記録一覧</button><button type="button" id="showSettings" aria-pressed="false">設定</button></nav>
 </header>
 <div id="studyView">
@@ -79,7 +79,7 @@
  <div class="record-scroll"><table class="records-table"><thead><tr><th scope="col">レッスン</th><th scope="col">1周目</th><th scope="col">2周目</th><th scope="col">3周目</th></tr></thead><tbody id="recordRows"></tbody></table></div>
 </section>
 <div id="settingsView" hidden>
-<section class="panel" aria-label="アプリ更新"><h2 class="compact-title">アプリ更新</h2><button id="checkAppUpdate" class="outline" type="button">最新版を確認・更新する</button><p id="appUpdateStatus" class="small-muted" role="status">v1.8</p></section>
+<section class="panel" aria-label="アプリ更新"><h2 class="compact-title">アプリ更新</h2><button id="checkAppUpdate" class="outline" type="button">最新版を確認・更新する</button><p id="appUpdateStatus" class="small-muted" role="status">v1.9</p></section>
 <section class="panel" aria-label="口語表現の音声設定"><div class="audio-pref"><label for="colloquialPreference"><strong>口語表現の復習音声</strong></label><select id="colloquialPreference" class="field"><option value="type_b">Type B</option><option value="type_c">Type C</option></select></div><p class="small-muted">全レッスンに共通して適用します。</p></section>
 <section class="panel" aria-label="学習通知"><h2 class="compact-title">毎朝の学習通知（試験）</h2>
 <p class="small-muted">朝5:00の通知をタップすると、このアプリを開きます。通知の登録は初回のみ必要です。</p>
@@ -136,16 +136,16 @@
 </details>
 <details class="details"><summary>技術情報・トラブル診断</summary><div class="tech"><p>通常は「直接再生」を使用します。SW経由はRange応答の比較試験用です。</p><div class="segmented"><button id="blobMode" class="selected" type="button" aria-pressed="true">直接再生</button><button id="swMode" type="button" aria-pressed="false">SW経由</button></div><div class="inline-actions"><button class="outline" id="rangeCheck" type="button">Range応答を確認</button><button class="outline" id="reloadAudio" type="button">音声を再読み込み</button></div><p id="swStatus" class="small-muted"></p><p id="diagnostics"></p><p class="small-muted">サービスワーカーが使えない場合は、HTTPSで開いてください。サイト初回起動後は再読み込みするとSW経由試験が可能になります。</p><div class="inline-actions"><button id="copyLog" class="outline" type="button">診断ログをコピー</button><button id="requestPersist" class="outline" type="button">保存保護を要求</button></div><pre id="log" aria-label="診断ログ"></pre><div class="maintenance-danger"><p>データを消去すると音声・本文・学習記録を失います。通常は使用しないでください。</p><button id="resetData" type="button" class="danger-link">試験データだけを消去</button></div></div></details>
 </div>
-<footer><p>v1.8 · 端末内保存</p></footer>
+<footer><p>v1.9 · 端末内保存</p></footer>
 <div id="toast" role="status" aria-live="polite" class="toast" hidden></div>
 </main>
-<script src="./core_20261123.js?build=v18topplayer-20261125" defer></script>
-<script src="./daily_core_20261123.js?build=v18topplayer-20261125" defer></script>
-<script src="./app_20261123.js?build=v18topplayer-20261125" defer></script>
-<script src="./library_20261123.js?build=v18topplayer-20261125" defer></script>
-<script src="./daily_20261123.js?build=v18topplayer-20261125" defer></script>
-<script src="./push_20261124.js?build=v18topplayer-20261125" defer></script>
-<script src="./bulk_folder_core_20261123.js?build=v18topplayer-20261125" defer></script>
-<script src="./bulk_folder_20261123.js?build=v18topplayer-20261125" defer></script>
+<script src="./core_20261123.js?build=v19topalign-20261125" defer></script>
+<script src="./daily_core_20261123.js?build=v19topalign-20261125" defer></script>
+<script src="./app_20261123.js?build=v19topalign-20261125" defer></script>
+<script src="./library_20261123.js?build=v19topalign-20261125" defer></script>
+<script src="./daily_20261123.js?build=v19topalign-20261125" defer></script>
+<script src="./push_20261124.js?build=v19topalign-20261125" defer></script>
+<script src="./bulk_folder_core_20261123.js?build=v19topalign-20261125" defer></script>
+<script src="./bulk_folder_20261123.js?build=v19topalign-20261125" defer></script>
 </body></html>
 
