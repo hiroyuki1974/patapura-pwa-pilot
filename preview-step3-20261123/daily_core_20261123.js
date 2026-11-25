@@ -1,4 +1,4 @@
-/* build:v23themes-20261125 */
+/* build:v24dailyplay-20261126 */
 /* パタプラ v0.7 日々の学習順序（個人用。教材本文を含まない） */
 (function(root){
 'use strict';
