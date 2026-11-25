@@ -1,4 +1,4 @@
-/* build:v24dailyplay-20261126 */
+/* build:v25status-20261126 */
 (function(){
 'use strict';
 const $=id=>document.getElementById(id);
