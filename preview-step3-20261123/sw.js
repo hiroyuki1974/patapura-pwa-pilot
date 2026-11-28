@@ -1,7 +1,7 @@
 /* Patapura PWA audio pilot, 2026-11-23. Only shell assets are cached; audio never leaves IndexedDB. */
 'use strict';
-const VERSION='patapura-step3-trial-shell-v27carryover-20261128';
-const BUILD='v27carryover-20261128';
+const VERSION='patapura-step3-trial-shell-v28header-20261128';
+const BUILD='v28header-20261128';
 const SHELL=['./','./index.html','./style_20261123.css','./app_20261123.js','./library_20261123.js','./core_20261123.js','./daily_core_20261123.js','./daily_20261123.js','./push_20261124.js','./bulk_folder_core_20261123.js','./bulk_folder_20261123.js','./manifest.webmanifest','./icon.svg'];
 const DB='patapura-pwa-step3-trial-v1';
 // Download an entire matching release before activating. Never reuse the HTTP cache.
