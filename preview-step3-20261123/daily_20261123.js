@@ -1,4 +1,4 @@
-/* build:v28header-20261128 */
+/* build:v29headersafe-20261128 */
 /* パタプラ v0.7 今日の3レッスン／3教材プログラム */
 (function(){
 'use strict';
@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
  $('recordClear').addEventListener('click',()=>saveEdit(true));
  $('recordCancel').addEventListener('click',closeEdit);
  $('resetLearningRecords').addEventListener('click',resetLearningRecords);
- document.addEventListener('patapura:home',()=>{showView('Study');$('dailyPanel').scrollIntoView({behavior:'smooth',block:'start'});});
+ document.addEventListener('patapura:home',()=>{showView('Study');window.scrollTo({top:0,behavior:'smooth'});});
  $('unifiedLessonSelect').addEventListener('change',()=>{const id=$('unifiedLessonSelect').value;if(id)openRecord(id);});
  document.addEventListener('patapura:selection',syncUnified);
  document.addEventListener('patapura:library-ready',syncUnified);
