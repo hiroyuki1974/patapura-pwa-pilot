@@ -1,4 +1,4 @@
-/* build:v26push0300-20261126 */
+/* build:v27carryover-20261128 */
 /* v0.6 / 2026-11-23. Adapted from the v0.5 offline reader. */
 (function(){
 'use strict';
@@ -10,7 +10,7 @@ function invalidateDailyAudio(){warmGeneration++;dailyAudioCache.clear();warmSig
 function warmDailyAudio(){
  if(!library||busy)return;
  const plan=PatapuraDailyCore.plan(progress,localDate());
- const ids=Object.values(plan.ids).filter(Boolean).map(id=>{const [track,num]=id.split(':');return C.audioId(track,Number(num),track==='colloquial'?preferredColloquialKind():'review');});
+ const ids=[...new Set(PatapuraDailyCore.tasks(plan).map(e=>e.id))].map(id=>{const [track,num]=id.split(':');return C.audioId(track,Number(num),track==='colloquial'?preferredColloquialKind():'review');});
  const signature=ids.join('|');
  if(signature===warmSignature)return;
  warmSignature=signature;
@@ -103,7 +103,7 @@ async function refreshLessons(preferred,persist=true,kind,round,autoPlay=false){
  for(const l of library?.lessons.filter(l=>l.track===$('offlineCourseSelect').value).sort((a,b)=>a.number-b.number)||[])option(select,l.id,l.title);
  if([...select.options].some(o=>o.value===preferred))select.value=preferred;
  const lesson=currentLesson();
- selectedRound=lesson?PatapuraDailyCore.roundForLesson(progress,lesson.id,localDate()):1;
+ selectedRound=lesson?(round&&lesson.id===preferred?PatapuraDailyCore.normalizeRound(round):PatapuraDailyCore.roundForLesson(progress,lesson.id,localDate())):1;
  await showLesson(persist,kind,autoPlay);
 }
 async function refreshCourses(selection=progress.selection,persist=true,autoPlay=false){
@@ -127,6 +127,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
  await appReady;
  for(const id of ['completeNextBtn','backToTop'])$(id)?.addEventListener('click',()=>autoPlayEpoch++);
  document.addEventListener('patapura:home',()=>autoPlayEpoch++);
+ document.addEventListener('patapura:record-reset',()=>{autoPlayEpoch++;selectionToken++;invalidateDailyAudio();});
  document.addEventListener('patapura:progress',warmDailyAudio);
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)warmDailyAudio();});
  for(const t of C.ORDER)option($('audioImportCourse'),t,C.NAMES[t]);
