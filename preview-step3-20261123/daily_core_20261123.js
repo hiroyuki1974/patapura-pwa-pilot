@@ -1,4 +1,4 @@
-/* build:v28header-20261128 */
+/* build:v29headersafe-20261128 */
 /* パタプラ v0.7 日々の学習順序（個人用。教材本文を含まない） */
 (function(root){
 'use strict';
