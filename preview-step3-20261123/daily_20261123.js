@@ -1,4 +1,4 @@
-/* build:v27carryover-20261128 */
+/* build:v28header-20261128 */
 /* パタプラ v0.7 今日の3レッスン／3教材プログラム */
 (function(){
 'use strict';
