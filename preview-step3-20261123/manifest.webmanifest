@@ -1,5 +1,5 @@
 {
-  "name": "今日のパタプラ v3.1",
+  "name": "パタプラ",
   "short_name": "パタプラ",
   "description": "既存の本文217件・復習音声297本を保持して毎日3レッスンを学習するオフラインPWA",
   "lang": "ja",
@@ -10,7 +10,7 @@
   "theme_color": "#123d59",
   "icons": [
     {
-      "src": "./apple-touch-icon-v31.png",
+      "src": "./apple-touch-icon.png?build=v32icon-20261128",
       "sizes": "180x180",
       "type": "image/png",
       "purpose": "any"

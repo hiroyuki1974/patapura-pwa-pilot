@@ -1,4 +1,4 @@
-/* build:v31icon-20261128 */
+/* build:v32icon-20261128 */
 (function(){
 'use strict';
 const $=id=>document.getElementById(id);

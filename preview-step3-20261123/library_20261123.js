@@ -1,4 +1,4 @@
-/* build:v31icon-20261128 */
+/* build:v32icon-20261128 */
 /* v0.6 / 2026-11-23. Adapted from the v0.5 offline reader. */
 (function(){
 'use strict';
