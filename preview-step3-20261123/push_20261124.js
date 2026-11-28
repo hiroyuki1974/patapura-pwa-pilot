@@ -1,4 +1,4 @@
-/* build:v26push0300-20261126 */
+/* build:v27carryover-20261128 */
 (function(){
 'use strict';
 const $=id=>document.getElementById(id);
@@ -12,8 +12,9 @@ function buttons(){const prep=$('pushPrepare'),allow=$('pushAllow'),copy=$('push
 async function badge(){
  if(!subscription||!available||typeof Notification==='undefined'||Notification.permission!=='granted')return;
  try{const d=PatapuraDailyCore.plan(progress,localDate());const done=PatapuraDailyCore.countFinished(d,progress);
- if(done===3&&navigator.clearAppBadge)await navigator.clearAppBadge();
- else if(done!==3&&navigator.setAppBadge)await navigator.setAppBadge(1);
+ const outstanding=PatapuraDailyCore.tasks(d).length-done+PatapuraDailyCore.hiddenPending(d,progress);
+ if(outstanding===0&&navigator.clearAppBadge)await navigator.clearAppBadge();
+ else if(outstanding>0&&navigator.setAppBadge)await navigator.setAppBadge(1);
  }catch(_){}
 }
 async function init(){
