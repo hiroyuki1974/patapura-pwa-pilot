@@ -1,7 +1,7 @@
-/* build:v26push0300-20261126 */
+/* build:v27carryover-20261128 */
 'use strict';
 const DB_NAME='patapura-pwa-step3-trial-v1';
-const APP_BUILD='v26push0300-20261126';
+const APP_BUILD='v27carryover-20261128';
 let swRegistration=null,checkingAppUpdate=false;
 const DB_VERSION=1;
 let MEDIA_ID='unselected';
@@ -40,7 +40,7 @@ async function recordDelete(store,id){const db=await openDB();try{return await n
  const tx=db.transaction(store,'readwrite');tx.objectStore(store).delete(id);
  tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
 });}finally{db.close();}}
-async function saveProgress(){await recordPut('progress',progress);renderProgress();document.dispatchEvent(new Event('patapura:progress'));}
+async function saveProgress(){progress.dailyPlan=PatapuraDailyCore.plan(progress,localDate());await recordPut('progress',progress);renderProgress();document.dispatchEvent(new Event('patapura:progress'));}
 function renderProgress(){
  $('todayDate').textContent='日本時間：'+localDate();
  const completed=PatapuraDailyCore.readDate(progress,selectedLessonId,selectedRound);
@@ -94,7 +94,7 @@ function refreshAudio(){
  lastKnownPosition=readPosition(positionKey);
  pendingPosition=lastKnownPosition>0?lastKnownPosition:null;
  audio.playbackRate=1;audio.defaultPlaybackRate=1;audio.load();$('playbackState').textContent='準備中';syncPlayerControls();
- if('mediaSession'in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:selectedLessonId+' / '+readableFilename(audioRecord.filename),artist:'パタプラ個人学習',album:'Patapura v2.6'});}catch(err){log('MediaSessionメタデータ不可：'+err.message);}}
+ if('mediaSession'in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:selectedLessonId+' / '+readableFilename(audioRecord.filename),artist:'パタプラ個人学習',album:'Patapura v2.7'});}catch(err){log('MediaSessionメタデータ不可：'+err.message);}}
 }
 async function showDiagnostics(){
  const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
@@ -155,7 +155,7 @@ async function checkAppUpdate(){
 $('checkAppUpdate')?.addEventListener('click',checkAppUpdate);
 function downloadBlob(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),12000);}
 async function startup(){
- log('アプリ起動：'+location.href);log('バージョン：2026-11-26 v2.6');
+ log('アプリ起動：'+location.href);log('バージョン：2026-11-26 v2.7');
  if(!('indexedDB'in window)){notice('IndexedDBに対応しない環境です');log('IDBなし：続行不可');return;}
  try{progress=(await recordGet('progress',PROGRESS_ID))||progress;audioRecord=await recordGet('audio',MEDIA_ID);renderStorage();renderProgress();refreshAudio();log('IDB復元：'+(audioRecord?'音声あり':'音声なし')+'／'+(progress.completedOn||'進捗なし'));}
  catch(err){notice('保存領域の読込に失敗しました');log('IDB読込エラー：'+err.message);}
