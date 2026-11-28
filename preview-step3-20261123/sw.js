@@ -1,14 +1,14 @@
 /* Patapura PWA audio pilot, 2026-11-23. Only shell assets are cached; audio never leaves IndexedDB. */
 'use strict';
-const VERSION='patapura-step3-trial-shell-v32icon-20261128';
-const BUILD='v32icon-20261128';
-const SHELL=['./','./index.html','./style_20261123.css','./app_20261123.js','./library_20261123.js','./core_20261123.js','./daily_core_20261123.js','./daily_20261123.js','./push_20261124.js','./bulk_folder_core_20261123.js','./bulk_folder_20261123.js','./manifest.webmanifest','./icon.svg','./apple-touch-icon-v31.png','./apple-touch-icon.png'];
+const VERSION='patapura-step3-trial-shell-v33backup-20261128';
+const BUILD='v33backup-20261128';
+const SHELL=['./','./index.html','./style_20261123.css','./app_20261123.js','./library_20261123.js','./core_20261123.js','./daily_core_20261123.js','./daily_20261123.js','./push_20261124.js','./bulk_folder_core_20261123.js','./bulk_folder_20261123.js','./manifest.webmanifest','./icon.svg','./apple-touch-icon-v31.png','./apple-touch-icon.png','./backup_20261128.js'];
 const DB='patapura-pwa-step3-trial-v1';
 // Download an entire matching release before activating. Never reuse the HTTP cache.
 const versioned=path=>{const url=new URL(path,self.registration.scope);url.searchParams.set('build',BUILD);return url;};
 async function installRelease(){
  const cache=await caches.open(VERSION);
- const markers={'./index.html':'name="patapura-build" content="'+BUILD+'"','./app_20261123.js':'/* build:'+BUILD+' */','./daily_20261123.js':'/* build:'+BUILD+' */','./daily_core_20261123.js':'/* build:'+BUILD+' */','./library_20261123.js':'/* build:'+BUILD+' */','./style_20261123.css':'/* build:'+BUILD+' */','./push_20261124.js':'/* build:'+BUILD+' */'};
+ const markers={'./backup_20261128.js':'/* build:'+BUILD+' */','./index.html':'name="patapura-build" content="'+BUILD+'"','./app_20261123.js':'/* build:'+BUILD+' */','./daily_20261123.js':'/* build:'+BUILD+' */','./daily_core_20261123.js':'/* build:'+BUILD+' */','./library_20261123.js':'/* build:'+BUILD+' */','./style_20261123.css':'/* build:'+BUILD+' */','./push_20261124.js':'/* build:'+BUILD+' */'};
  try{
   for(const path of SHELL.filter(p=>p!=='./')){
    const response=await fetch(versioned(path),{cache:'reload'});
