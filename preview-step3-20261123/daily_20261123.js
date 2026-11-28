@@ -1,4 +1,4 @@
-/* build:v26push0300-20261126 */
+/* build:v27carryover-20261128 */
 /* パタプラ v0.7 今日の3レッスン／3教材プログラム */
 (function(){
 'use strict';
@@ -24,6 +24,23 @@ async function saveEdit(remove=false){
  try{D.setDate(progress,id,round,date);await saveProgress();notice('学習記録を更新しました');editBusy=false;closeEdit();renderRecords();}
  catch(err){D.setDate(progress,id,round,previous);$('recordEditStatus').textContent='保存できませんでした';renderProgress();renderRecords();}
  finally{editBusy=false;$('recordSave').disabled=false;$('recordClear').disabled=!D.readDate(progress,id,round);}
+}
+async function resetLearningRecords(){
+ if(editBusy||completing||$('resetData').disabled)return;
+ if(!confirm('全3周の学習記録・繰越予定・再生位置をリセットします。本文・音声・通知設定は削除しません。必要な場合は先に設定からバックアップしてください。実行しますか？'))return;
+ editBusy=true;$('resetLearningRecords').disabled=true;
+ pauseForNavigation();
+ document.dispatchEvent(new Event('patapura:record-reset'));
+ const next={...progress,completedOn:null,lessons:{},rounds:{},selection:{track:'standard',id:'standard:1',kind:'review',round:1},dailyPlan:null};
+ next.dailyPlan=D.plan(next,localDate());
+ try{
+  await recordPut('progress',next);
+  progress=next;positionKey=null;positionReady=false;pendingPosition=null;lastKnownPosition=0;clearSavedPositions();
+  editing=null;$('recordEdit').hidden=true;
+  renderProgress();document.dispatchEvent(new Event('progressrestored'));document.dispatchEvent(new Event('patapura:progress'));
+  renderRecords();render();notice('学習記録をリセットしました');
+ }catch(err){notice('学習記録をリセットできませんでした');log('記録リセット失敗：'+err.message);}
+ finally{editBusy=false;$('resetLearningRecords').disabled=false;}
 }
 function renderRecords(){
  const p=D.PROGRAMS.find(x=>x.key===recordProgram)||D.PROGRAMS[0];
@@ -93,20 +110,22 @@ function render(){
  const p=D.plan(progress,localDate());
  const root=$('dailyCards');if(!root)return;
  root.replaceChildren();
- const finished=D.countFinished(p,progress);
- $('dailyCount').textContent=finished+' / 3 完了';
+ const items=D.tasks(p),finished=D.countFinished(p,progress),hidden=D.hiddenPending(p,progress);
+ $('dailyCount').textContent=finished+' / '+items.length+' 完了';
  $('dailyDate').textContent=p.date;
- for(const program of D.PROGRAMS){
-  const id=p.ids[program.key],round=p.rounds[program.key],done=id?Boolean(D.readDate(progress,id,round)):true;
+ for(const item of items){
+  const program=D.PROGRAMS.find(x=>x.key===item.program);
+  const {id,round}=item,done=Boolean(D.readDate(progress,id,round)),carry=item.date<p.date;
   const article=document.createElement('article');article.className='daily-card'+(done?' daily-done':'');
   const heading=document.createElement('div');heading.className='daily-top';
   const h=document.createElement('strong');h.textContent=program.title;
   const state=document.createElement('span');state.className='daily-state';state.textContent=!id?'全課程完了':done?'完了':'未完了';
   heading.append(h);
-  const target=document.createElement('p');target.className='daily-target';target.textContent=shortLabel(id)+(id&&round>1?' · '+round+'周':'');
+  const target=document.createElement('p');target.className='daily-target';target.textContent=shortLabel(id)+(round>1?' · '+round+'周':'');
+  if(carry){const label=document.createElement('span');label.className='carry-label';label.textContent='繰越 '+item.date.slice(5).replace('-','/');target.append(label);article.classList.add('daily-carry');}
   article.append(heading,target,state,makeButton({id,done,round}));root.append(article);
  }
- $('dailyMessage').textContent=finished===3?'今日の学習完了':'';
+ $('dailyMessage').textContent=hidden?'ほかに繰越 '+hidden+'件（次の日以降に表示）':items.length===0?'本日の予定なし':finished===items.length?'今日の学習完了':'';
  syncProgram();
 }
 document.addEventListener('DOMContentLoaded',async()=>{
@@ -120,6 +139,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
  $('recordSave').addEventListener('click',()=>saveEdit());
  $('recordClear').addEventListener('click',()=>saveEdit(true));
  $('recordCancel').addEventListener('click',closeEdit);
+ $('resetLearningRecords').addEventListener('click',resetLearningRecords);
  document.addEventListener('patapura:home',()=>{showView('Study');$('dailyPanel').scrollIntoView({behavior:'smooth',block:'start'});});
  $('unifiedLessonSelect').addEventListener('change',()=>{const id=$('unifiedLessonSelect').value;if(id)openRecord(id);});
  document.addEventListener('patapura:selection',syncUnified);
@@ -145,5 +165,6 @@ document.addEventListener('DOMContentLoaded',async()=>{
  document.addEventListener('progressrestored',async()=>{await ensureDaily();render();});
  document.addEventListener('trialreset',render);
  window.addEventListener('pageshow',async()=>{await ensureDaily();render();});
+ document.addEventListener('visibilitychange',async()=>{if(!document.hidden){await ensureDaily();render();}});
 });
 })();
