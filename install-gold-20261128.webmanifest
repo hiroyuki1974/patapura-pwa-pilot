@@ -1,0 +1,19 @@
+{
+  "id": "/patapura-pwa-pilot/preview-step3-20261123/",
+  "start_url": "/patapura-pwa-pilot/preview-step3-20261123/",
+  "scope": "/patapura-pwa-pilot/preview-step3-20261123/",
+  "name": "パタプラ",
+  "short_name": "パタプラ",
+  "lang": "ja",
+  "display": "standalone",
+  "background_color": "#101010",
+  "theme_color": "#101010",
+  "icons": [
+    {
+      "src": "/patapura-pwa-pilot/patapura-gold-20261128.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
