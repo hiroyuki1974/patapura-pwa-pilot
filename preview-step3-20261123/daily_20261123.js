@@ -1,4 +1,4 @@
-/* build:v29headersafe-20261128 */
+/* build:v30headermax-20261128 */
 /* パタプラ v0.7 今日の3レッスン／3教材プログラム */
 (function(){
 'use strict';
